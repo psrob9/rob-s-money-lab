@@ -48,52 +48,52 @@ interface UploadedFile {
 const CATEGORIES: CategoryConfig[] = [
   {
     name: "Housing",
-    keywords: ["rent", "mortgage", "hoa", "property", "insurance", "home", "apartment", "lease"],
+    keywords: ["rent", "mortgage", "hoa", "property", "insurance", "home", "apartment", "lease", "wells fargo home", "chase home", "bank of america home", "citi mortgage", "quicken loans", "rocket mortgage", "guaranteed rate", "loandepot", "caliber home", "pennymac", "mr cooper", "nationstar", "loancare", "newrez", "carrington", "guild mortgage", "fairway", "freedom mortgage"],
     color: "bg-amber-500",
   },
   {
     name: "Food & Dining",
-    keywords: ["restaurant", "doordash", "uber eats", "grubhub", "chipotle", "mcdonald", "starbucks", "dunkin", "pizza", "sushi", "thai", "chinese", "mexican", "burger", "cafe", "coffee", "diner", "grill", "kitchen", "bistro", "taco", "wing", "sub", "sandwich", "bakery", "deli", "bar & grill", "chick-fil-a", "wendy", "panera", "five guys", "sweetgreen", "cava", "oats overnight", "daily harvest", "factor", "hello fresh", "blue apron", "freshly", "smoothie", "juice", "acai", "poke"],
+    keywords: ["restaurant", "doordash", "uber eats", "grubhub", "chipotle", "mcdonald", "starbucks", "dunkin", "pizza", "sushi", "thai", "chinese", "mexican", "burger", "cafe", "coffee", "diner", "grill", "kitchen", "bistro", "taco", "wing", "sub", "sandwich", "bakery", "deli", "bar & grill", "chick-fil-a", "wendy", "panera", "five guys", "sweetgreen", "cava", "oats overnight", "daily harvest", "factor", "hello fresh", "blue apron", "freshly", "smoothie", "juice", "acai", "poke", "panda express", "kfc", "popeyes", "sonic", "arby", "jack in the box", "in-n-out", "whataburger", "culver", "wingstop", "buffalo wild", "applebee", "chili", "olive garden", "red lobster", "outback", "longhorn", "texas roadhouse", "cracker barrel", "ihop", "waffle house", "denny", "golden corral", "pizza hut", "domino", "papa john", "little caesar", "blaze pizza", "mod pizza", "just salad", "dig", "honeygrow", "chopd", "chopt", "mendocino", "true food", "flower child", "native grill", "first watch", "snooze", "another broken egg", "wild eggs", "hash house", "original pancake house", "olo", "toast tab", "square meal", "resy"],
     color: "bg-orange-500",
   },
   {
     name: "Groceries",
-    keywords: ["walmart", "kroger", "safeway", "trader joe", "whole foods", "aldi", "costco", "target", "publix", "heb", "wegmans", "giant", "food lion", "stop & shop", "sprouts", "grocery", "market", "supermarket"],
+    keywords: ["walmart", "kroger", "safeway", "trader joe", "whole foods", "aldi", "costco", "target", "publix", "heb", "wegmans", "giant", "food lion", "stop & shop", "sprouts", "grocery", "market", "supermarket", "albertsons", "vons", "ralphs", "meijer", "winco", "harris teeter", "shoprite", "acme", "giant eagle", "jewel", "schnucks", "hy-vee", "hyvee", "cub foods", "lidl", "fresh market", "erewhon", "gelson", "raley", "lucky", "foodmaxx", "save mart", "price chopper"],
     color: "bg-green-500",
   },
   {
     name: "Transportation",
-    keywords: ["uber", "lyft", "gas", "shell", "chevron", "exxon", "bp", "mobil", "speedway", "wawa", "parking", "toll", "metro", "transit", "amtrak", "airline", "united", "delta", "american air", "southwest", "spirit", "frontier", "swa", "jetblue", "alaska air", "united air", "delta air", "ev charge", "chargepoint", "electrify", "evgo", "plugshare", "tesla supercharger", "hertz", "enterprise", "avis", "budget rental", "national car", "turo", "luggage", "bag fee", "excs_bag"],
+    keywords: ["uber", "lyft", "gas", "shell", "chevron", "exxon", "bp", "mobil", "speedway", "wawa", "parking", "toll", "metro", "transit", "amtrak", "airline", "united", "delta", "american air", "southwest", "spirit", "frontier", "swa", "jetblue", "alaska air", "united air", "delta air", "ev charge", "chargepoint", "electrify", "evgo", "plugshare", "tesla supercharger", "hertz", "enterprise", "avis", "budget rental", "national car", "turo", "luggage", "bag fee", "excs_bag", "blink charging", "volta", "rivian", "zipcar", "bird", "lime", "spin", "veo", "citibike", "citi bike", "capital bikeshare", "divvy", "bay wheels"],
     color: "bg-blue-500",
   },
   {
     name: "Shopping",
-    keywords: ["amazon", "ebay", "etsy", "best buy", "home depot", "lowes", "ikea", "wayfair", "tj maxx", "marshalls", "ross", "nordstrom", "macy", "kohls", "old navy", "gap", "nike", "adidas", "apple store", "mack weldon", "bonobos", "untuckit", "bombas", "allbirds", "everlane", "simply to impress", "push pin", "rockdoodles", "foggy dog", "chewy", "barkbox", "pet"],
+    keywords: ["amazon", "ebay", "etsy", "best buy", "home depot", "lowes", "ikea", "wayfair", "tj maxx", "marshalls", "ross", "nordstrom", "macy", "kohls", "old navy", "gap", "nike", "adidas", "apple store", "mack weldon", "bonobos", "untuckit", "bombas", "allbirds", "everlane", "simply to impress", "push pin", "rockdoodles", "foggy dog", "chewy", "barkbox", "pet", "depop", "poshmark", "mercari", "offerup", "fb marketplace", "thredup", "realreal", "vestiaire", "stockx", "goat", "grailed", "vuori", "lululemon", "athleta", "fabletics", "gymshark", "alo", "beyond yoga", "outdoor voices", "girlfriend collective", "prana", "patagonia", "rei", "north face", "columbia", "carhartt", "dickies", "duluth", "ll bean", "lands end", "eddie bauer", "orvis", "fjallraven", "herschel", "away", "calpak", "samsonite", "tumi", "rimowa", "coach", "kate spade", "michael kors", "tory burch", "marc jacobs", "reformation", "sezane"],
     color: "bg-purple-500",
   },
   {
     name: "Subscriptions & Entertainment",
-    keywords: ["netflix", "spotify", "hulu", "disney+", "hbo", "youtube", "apple music", "amazon prime", "audible", "kindle", "patreon", "twitch", "playstation", "xbox", "steam", "nintendo", "movie", "cinema", "theater", "amc", "regal", "onlyfans", "ccbill", "nytimes", "new york times", "wsj", "wall street", "washington post", "wapo", "reuters", "prime video", "peacock", "paramount+", "max", "discovery+", "showtime", "starz", "crunchyroll", "claude", "anthropic", "openai", "chatgpt", "lovable", "github", "figma", "notion", "canva", "substack", "medium", "icloud", "dropbox", "google one", "google storage", "adobe", "creative cloud", "nyt cooking", "nyt games"],
+    keywords: ["netflix", "spotify", "hulu", "disney+", "hbo", "youtube", "apple music", "amazon prime", "audible", "kindle", "patreon", "twitch", "playstation", "xbox", "steam", "nintendo", "movie", "cinema", "theater", "amc", "regal", "onlyfans", "ccbill", "nytimes", "new york times", "wsj", "wall street", "washington post", "wapo", "reuters", "prime video", "peacock", "paramount+", "max", "discovery+", "showtime", "starz", "crunchyroll", "claude", "anthropic", "openai", "chatgpt", "lovable", "github", "figma", "notion", "canva", "substack", "medium", "icloud", "dropbox", "google one", "google storage", "adobe", "creative cloud", "nyt cooking", "nyt games", "apple.com/bill", "apple one", "apple tv", "apple arcade", "apple fitness", "apple storage", "google play", "play store", "youtube music", "youtube premium", "youtube tv", "espn+", "dazn", "fubo", "sling", "philo", "nyt", "economist", "atlantic", "new yorker", "npm", "vercel", "netlify", "heroku", "aws", "azure", "digitalocean", "supabase", "firebase", "mongodb", "planetscale", "cursor", "replit", "1password", "lastpass", "nordvpn", "expressvpn", "protonvpn", "backblaze", "zoom", "slack", "microsoft 365", "office 365", "google workspace", "evernote", "todoist", "discord nitro"],
     color: "bg-pink-500",
   },
   {
     name: "Travel & Entertainment",
-    keywords: ["vacaya", "atlantis events", "rsvp vacations", "cruise", "hotel", "airbnb", "vrbo", "marriott", "hilton", "hyatt", "resort", "travel", "booking.com", "expedia", "kayak", "tripadvisor"],
+    keywords: ["vacaya", "atlantis events", "rsvp vacations", "cruise", "hotel", "airbnb", "vrbo", "marriott", "hilton", "hyatt", "resort", "travel", "booking.com", "expedia", "kayak", "tripadvisor", "hotwire", "travelzoo", "going", "lonely planet", "opentable", "tock"],
     color: "bg-cyan-500",
   },
   {
     name: "Utilities & Bills",
-    keywords: ["electric", "water", "gas bill", "internet", "comcast", "verizon", "at&t", "t-mobile", "sprint", "xfinity", "spectrum", "cox", "power", "utility", "sewage", "trash", "waste"],
+    keywords: ["electric", "water", "gas bill", "internet", "comcast", "verizon", "at&t", "t-mobile", "sprint", "xfinity", "spectrum", "cox", "power", "utility", "sewage", "trash", "waste", "att", "fios", "centurylink", "hughesnet", "starlink", "mint mobile", "visible", "us mobile", "cricket", "metro by t-mobile", "boost", "straight talk", "google fi", "geico", "progressive", "state farm", "allstate", "farmers", "usaa", "liberty mutual", "nationwide", "travelers", "lemonade", "hippo", "metromile", "root"],
     color: "bg-slate-500",
   },
   {
     name: "Healthcare",
-    keywords: ["pharmacy", "cvs", "walgreens", "doctor", "hospital", "medical", "dental", "vision", "health", "urgent care", "clinic", "lab", "prescription", "rx"],
+    keywords: ["pharmacy", "cvs", "walgreens", "doctor", "hospital", "medical", "dental", "vision", "health", "urgent care", "clinic", "lab", "prescription", "rx", "caremark", "optumrx", "express scripts", "cigna pharmacy", "humana pharmacy", "flexcard", "otc card", "flex card", "fsa", "hsa", "hra", "healthequity", "wageworks"],
     color: "bg-red-500",
   },
   {
     name: "Donations & Memberships",
-    keywords: ["donation", "donate", "charity", "church", "temple", "mosque", "synagogue", "chorus", "orchestra", "symphony", "museum", "zoo", "npr", "pbs", "aclu", "hrc", "planned parenthood", "united way", "red cross", "gofundme"],
+    keywords: ["donation", "donate", "charity", "church", "temple", "mosque", "synagogue", "chorus", "orchestra", "symphony", "museum", "zoo", "npr", "pbs", "aclu", "hrc", "planned parenthood", "united way", "red cross", "gofundme", "spca", "humane", "shelter", "animal rescue", "pet rescue", "dog rescue", "cat rescue", "wildlife", "conservation", "nature", "sierra", "audubon", "wwf", "greenpeace", "earthjustice", "nrdc", "naacp", "splc", "girl scouts", "boy scouts", "big brothers", "big sisters", "volunteer", "rotary", "kiwanis", "lions club", "vfw", "american legion"],
     color: "bg-violet-500",
   },
   {
@@ -126,23 +126,59 @@ const cleanDescription = (description: string): string => {
 
 const categorizeTransaction = (description: string, amount: number): { category: string; color: string } => {
   const originalDesc = description.toLowerCase();
+  const upperDesc = description.toUpperCase();
   const cleanedDesc = cleanDescription(description).toLowerCase();
   
-  // Check for TST* prefix (Toast payments - restaurants)
-  if (originalDesc.startsWith("tst*")) {
-    const foodCategory = CATEGORIES.find(c => c.name === "Food & Dining");
-    return { category: foodCategory!.name, color: foodCategory!.color };
+  // === PATTERN-BASED RULES (check BEFORE keywords) ===
+  
+  // 1. AMZN patterns → Shopping
+  if (upperDesc.includes("AMZN") || upperDesc.includes("AMAZON")) {
+    const cat = CATEGORIES.find(c => c.name === "Shopping");
+    return { category: cat!.name, color: cat!.color };
   }
   
-  // Check for Income first if amount is positive
+  // 2. Toast/Restaurant POS → Food & Dining
+  if (upperDesc.startsWith("TST*") || upperDesc.startsWith("TST ") || upperDesc.includes("TOAST TAB")) {
+    const cat = CATEGORIES.find(c => c.name === "Food & Dining");
+    return { category: cat!.name, color: cat!.color };
+  }
+  
+  // 3. Apple billing → Subscriptions
+  if (upperDesc.includes("APPLE.COM/BILL") || upperDesc.includes("APPLE.COM BILL") || 
+      upperDesc.includes("APPLE MUSIC") || upperDesc.includes("APPLE TV") || upperDesc.includes("APPLE ONE")) {
+    const cat = CATEGORIES.find(c => c.name === "Subscriptions & Entertainment");
+    return { category: cat!.name, color: cat!.color };
+  }
+  
+  // 4. Fee patterns → Utilities & Bills
+  if (upperDesc.includes("SERVICE FEE") || upperDesc.includes("MONTHLY FEE") || 
+      upperDesc.includes("MAINTENANCE FEE") || upperDesc.includes("SERVICE CHG") || upperDesc.includes("ACCOUNT FEE")) {
+    const cat = CATEGORIES.find(c => c.name === "Utilities & Bills");
+    return { category: cat!.name, color: cat!.color };
+  }
+  
+  // 5. ATM/Cash → Transfers
+  if (upperDesc.includes("ATM") || upperDesc.includes("CASH WITHDRAWAL") || 
+      upperDesc.includes("CASH BACK") || upperDesc.startsWith("CHECK ") || upperDesc.startsWith("CHK ")) {
+    const cat = CATEGORIES.find(c => c.name === "Transfers & Payments");
+    return { category: cat!.name, color: cat!.color };
+  }
+  
+  // 6. Payroll/Income patterns (with positive amount) → Income
   if (amount > 0) {
+    if (upperDesc.includes("PAYROLL") || upperDesc.includes("DIRECT DEP") || 
+        upperDesc.includes("DIR DEP") || upperDesc.includes("ACH DEPOSIT") || upperDesc.includes("SALARY")) {
+      const cat = CATEGORIES.find(c => c.name === "Income");
+      return { category: cat!.name, color: cat!.color };
+    }
+    // Also check keyword-based income
     const incomeCategory = CATEGORIES.find(c => c.name === "Income");
     if (incomeCategory && incomeCategory.keywords.some(k => cleanedDesc.includes(k) || originalDesc.includes(k))) {
       return { category: incomeCategory.name, color: incomeCategory.color };
     }
   }
   
-  // Check other categories using both original and cleaned description
+  // === KEYWORD MATCHING ===
   for (const cat of CATEGORIES) {
     if (cat.name === "Income") continue; // Skip income for expenses
     if (cat.keywords.some(keyword => cleanedDesc.includes(keyword) || originalDesc.includes(keyword))) {
@@ -150,10 +186,16 @@ const categorizeTransaction = (description: string, amount: number): { category:
     }
   }
   
-  // Check for SP prefix (Shopify/Stripe merchants) - default to Shopping if no other match
-  if (originalDesc.startsWith("sp ") && !originalDesc.includes("spotify")) {
-    const shoppingCategory = CATEGORIES.find(c => c.name === "Shopping");
-    return { category: shoppingCategory!.name, color: shoppingCategory!.color };
+  // === FALLBACK PATTERNS (after keyword matching fails) ===
+  
+  // Square/Shopify fallbacks → Shopping
+  if (upperDesc.startsWith("SQ *") || upperDesc.startsWith("SQU*") || 
+      upperDesc.startsWith("SP ") || upperDesc.startsWith("SHP*") || upperDesc.includes("SHOPIFY")) {
+    // Only if not already matched by keywords (and not spotify)
+    if (!originalDesc.includes("spotify")) {
+      const cat = CATEGORIES.find(c => c.name === "Shopping");
+      return { category: cat!.name, color: cat!.color };
+    }
   }
   
   return { category: "Uncategorized", color: "bg-neutral-400" };
