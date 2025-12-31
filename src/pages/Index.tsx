@@ -7,12 +7,12 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="py-16 sm:py-24 lg:py-32">
+      <section className="py-16 sm:py-24 lg:py-32 bg-gradient-to-br from-slate-50 via-background to-teal-50/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-lab-navy mb-6 animate-fade-in">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-lab-navy mb-6 animate-fade-in">
             Rob's Money Lab
           </h1>
-          <p className="text-xl sm:text-2xl text-lab-teal font-medium mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+          <p className="text-xl sm:text-2xl text-lab-teal font-semibold mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
             Simple tools for real money questions.
           </p>
           <p className="text-lg text-lab-warm-gray leading-relaxed animate-fade-in" style={{ animationDelay: "0.2s" }}>

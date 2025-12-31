@@ -5,9 +5,10 @@ const About = () => {
     <Layout>
       <section className="py-16 sm:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl">
-          <h1 className="text-3xl sm:text-4xl font-bold text-lab-navy mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-lab-navy mb-4">
             Hey, I'm Rob
           </h1>
+          <div className="w-16 h-1 bg-lab-teal rounded-full mb-8" />
           
           <div className="prose prose-lg max-w-none space-y-6 text-lab-warm-gray leading-relaxed">
             <p>
