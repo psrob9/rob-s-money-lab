@@ -1,13 +1,80 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Link } from "react-router-dom";
+import { Layout } from "@/components/Layout";
+import { ToolCard } from "@/components/ToolCard";
+import { ArrowRight } from "lucide-react";
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <Layout>
+      {/* Hero Section */}
+      <section className="py-16 sm:py-24 lg:py-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl text-center">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-lab-navy mb-6 animate-fade-in">
+            Rob's Money Lab
+          </h1>
+          <p className="text-xl sm:text-2xl text-lab-teal font-medium mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            Simple tools for real money questions.
+          </p>
+          <p className="text-lg text-lab-warm-gray leading-relaxed animate-fade-in" style={{ animationDelay: "0.2s" }}>
+            Free tools I've built to help people understand their money better. 
+            No ads. No data selling. Just useful stuff.
+          </p>
+        </div>
+      </section>
+
+      {/* Tools Preview Section */}
+      <section className="py-16 bg-secondary/50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+          <h2 className="text-2xl sm:text-3xl font-bold text-lab-navy mb-8 text-center">
+            The Tools
+          </h2>
+          
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <ToolCard
+              title="Money Snapshot"
+              description="See where your money actually goes in 60 seconds. Upload a CSV, get instant clarity."
+              href="/tools/money-snapshot"
+              badge="Coming Soon"
+              comingSoon
+            />
+            
+            {/* Placeholder cards for future tools */}
+            <div className="hidden sm:block bg-card/50 rounded-xl border border-dashed border-border p-6 flex items-center justify-center min-h-[180px]">
+              <p className="text-muted-foreground text-sm text-center">More tools coming...</p>
+            </div>
+            <div className="hidden lg:block bg-card/50 rounded-xl border border-dashed border-border p-6 flex items-center justify-center min-h-[180px]">
+              <p className="text-muted-foreground text-sm text-center">More tools coming...</p>
+            </div>
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link 
+              to="/tools" 
+              className="inline-flex items-center text-lab-teal font-medium hover:underline"
+            >
+              View all tools
+              <ArrowRight size={18} className="ml-1" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* About Teaser Section */}
+      <section className="py-16 sm:py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl text-center">
+          <p className="text-lg text-lab-warm-gray leading-relaxed mb-6">
+            Built by Rob, a regular person who got tired of budgeting apps that make money feel complicated.
+          </p>
+          <Link 
+            to="/about" 
+            className="inline-flex items-center text-lab-teal font-medium hover:underline"
+          >
+            Learn more about this project
+            <ArrowRight size={18} className="ml-1" />
+          </Link>
+        </div>
+      </section>
+    </Layout>
   );
 };
 
