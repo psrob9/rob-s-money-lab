@@ -1,11 +1,23 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X } from "lucide-react";
+import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import Papa from "papaparse";
+import { 
+  getLearnedCategories, 
+  addLearnedCategory, 
+  removeLearnedCategory, 
+  clearLearnedCategories, 
+  matchLearnedCategory, 
+  extractPattern,
+  type LearnedCategory 
+} from "@/utils/categoryLearning";
 
 interface Transaction {
   date: string;
@@ -128,6 +140,13 @@ const categorizeTransaction = (description: string, amount: number): { category:
   const originalDesc = description.toLowerCase();
   const upperDesc = description.toUpperCase();
   const cleanedDesc = cleanDescription(description).toLowerCase();
+  
+  // === USER-TAUGHT CATEGORIES (check FIRST - highest priority) ===
+  const learnedCategory = matchLearnedCategory(description);
+  if (learnedCategory) {
+    const cat = CATEGORIES.find(c => c.name === learnedCategory);
+    if (cat) return { category: cat.name, color: cat.color };
+  }
   
   // === PATTERN-BASED RULES (check BEFORE keywords) ===
   
@@ -261,6 +280,17 @@ const MoneySnapshot = () => {
   const [insights, setInsights] = useState<string | null>(null);
   const [insightsError, setInsightsError] = useState<string | null>(null);
   const [filesExpanded, setFilesExpanded] = useState(false);
+  
+  // Category teaching state
+  const [teachingTransaction, setTeachingTransaction] = useState<Transaction | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [learnedCategories, setLearnedCategories] = useState<LearnedCategory[]>([]);
+  const [learnedRulesOpen, setLearnedRulesOpen] = useState(false);
+
+  // Load learned categories on mount
+  useEffect(() => {
+    setLearnedCategories(getLearnedCategories());
+  }, []);
 
   // Computed values from files
   const allTransactions = useMemo(() => {
@@ -310,7 +340,7 @@ const MoneySnapshot = () => {
         return category === "Uncategorized";
       })
       .slice(0, 20);
-  }, [allTransactions]);
+  }, [allTransactions, learnedCategories]);
 
   // Count all uncategorized transactions
   const uncategorizedCount = useMemo(() => {
@@ -319,7 +349,62 @@ const MoneySnapshot = () => {
       const { category } = categorizeTransaction(txn.description, txn.amount);
       return category === "Uncategorized";
     }).length;
+  }, [allTransactions, learnedCategories]);
+
+  // Refresh category breakdown when learned categories change
+  const refreshAnalysis = useCallback(() => {
+    if (allTransactions.length > 0) {
+      const breakdown = calculateCategoryBreakdown(allTransactions);
+      setCategoryBreakdown(breakdown);
+    }
   }, [allTransactions]);
+
+  // Available categories for teaching (exclude Income, Transfers, Uncategorized)
+  const teachableCategories = useMemo(() => {
+    return CATEGORIES.filter(c => 
+      c.name !== "Income" && 
+      c.name !== "Transfers & Payments" && 
+      c.name !== "Uncategorized"
+    );
+  }, []);
+
+  // Handle teaching a category
+  const handleTeachCategory = useCallback(() => {
+    if (!teachingTransaction || !selectedCategory) return;
+    
+    const pattern = extractPattern(teachingTransaction.description);
+    addLearnedCategory(pattern, selectedCategory);
+    
+    // Update local state
+    setLearnedCategories(getLearnedCategories());
+    
+    // Refresh the analysis
+    refreshAnalysis();
+    
+    // Show feedback
+    toast.success(`Got it! Future transactions like "${pattern}" will be categorized as ${selectedCategory}.`);
+    
+    // Close dialog
+    setTeachingTransaction(null);
+    setSelectedCategory("");
+  }, [teachingTransaction, selectedCategory, refreshAnalysis]);
+
+  // Handle removing a learned category
+  const handleRemoveLearnedCategory = useCallback((pattern: string) => {
+    removeLearnedCategory(pattern);
+    setLearnedCategories(getLearnedCategories());
+    refreshAnalysis();
+    toast.success("Rule removed");
+  }, [refreshAnalysis]);
+
+  // Handle clearing all learned categories
+  const handleClearAllLearned = useCallback(() => {
+    clearLearnedCategories();
+    setLearnedCategories([]);
+    refreshAnalysis();
+    toast.success("All custom rules cleared");
+    setLearnedRulesOpen(false);
+  }, [refreshAnalysis]);
 
   const fetchInsights = useCallback(async () => {
     if (!analysis || categoryBreakdown.length === 0) return;
@@ -978,11 +1063,15 @@ const MoneySnapshot = () => {
                                   <ScrollArea className="max-h-[200px]">
                                     <div className="space-y-0">
                                       {uncategorizedTransactions.map((txn, idx) => (
-                                        <div 
-                                          key={idx} 
-                                          className="flex items-center justify-between text-sm text-muted-foreground py-2.5 border-b border-border/30 last:border-0"
+                                        <button 
+                                          key={idx}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setTeachingTransaction(txn);
+                                          }}
+                                          className="flex items-center justify-between w-full text-sm text-muted-foreground py-2.5 px-2 -mx-2 border-b border-border/30 last:border-0 cursor-pointer hover:bg-lab-teal/10 rounded-md transition-colors group text-left"
                                         >
-                                          <span className="truncate max-w-[200px] sm:max-w-[280px]" title={txn.description}>
+                                          <span className="truncate max-w-[200px] sm:max-w-[280px] group-hover:text-lab-teal" title="Click to categorize">
                                             {txn.description.length > 50 
                                               ? txn.description.substring(0, 50) + "..." 
                                               : txn.description}
@@ -990,12 +1079,12 @@ const MoneySnapshot = () => {
                                           <span className="font-mono font-medium text-lab-navy ml-2 flex-shrink-0">
                                             {formatCurrency(Math.abs(txn.amount))}
                                           </span>
-                                        </div>
+                                        </button>
                                       ))}
                                     </div>
                                   </ScrollArea>
                                   <p className="text-xs text-muted-foreground italic mt-3 pt-2 border-t border-border/30">
-                                    Seeing something that should be categorized? Let me know!
+                                    Click any transaction to teach me how to categorize it
                                   </p>
                                 </div>
                               </CollapsibleContent>
@@ -1030,9 +1119,18 @@ const MoneySnapshot = () => {
                           </div>
                         );
                       })}
-                      <p className="text-xs text-muted-foreground mt-4 pt-2 border-t border-border">
-                        Categories detected automatically based on transaction descriptions
-                      </p>
+                      <div className="text-xs text-muted-foreground mt-4 pt-2 border-t border-border">
+                        <p>Categories detected automatically based on transaction descriptions</p>
+                        {learnedCategories.length > 0 && (
+                          <button 
+                            onClick={() => setLearnedRulesOpen(true)}
+                            className="text-lab-teal hover:underline mt-1 flex items-center gap-1"
+                          >
+                            <Settings size={12} />
+                            + {learnedCategories.length} custom rule{learnedCategories.length !== 1 ? 's' : ''} you've taught
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="py-8 text-center">
@@ -1127,6 +1225,115 @@ const MoneySnapshot = () => {
           )}
         </div>
       </section>
+
+      {/* Category Teaching Dialog */}
+      <Dialog open={!!teachingTransaction} onOpenChange={(open) => !open && setTeachingTransaction(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Categorize this transaction</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-3 bg-secondary/50 rounded-lg">
+              <p className="text-sm font-medium text-lab-navy break-words">
+                "{teachingTransaction?.description}"
+              </p>
+              {teachingTransaction && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pattern: {extractPattern(teachingTransaction.description)}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select a category:</label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {teachableCategories.map((cat) => (
+                    <SelectItem key={cat.name} value={cat.name}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${cat.color}`} />
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTeachingTransaction(null)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleTeachCategory}
+              disabled={!selectedCategory}
+              className="bg-lab-teal hover:bg-lab-teal/90 text-white"
+            >
+              Save – Remember for future
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Learned Rules Management Dialog */}
+      <Dialog open={learnedRulesOpen} onOpenChange={setLearnedRulesOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Your Custom Category Rules</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {learnedCategories.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No custom rules yet. Click on uncategorized transactions to teach me!
+              </p>
+            ) : (
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-2">
+                  {learnedCategories.map((rule, idx) => (
+                    <div 
+                      key={idx}
+                      className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-lab-navy truncate">
+                          {rule.pattern}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          → {rule.category}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveLearnedCategory(rule.pattern)}
+                        className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                      >
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {learnedCategories.length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={handleClearAllLearned}
+                className="text-destructive hover:text-destructive"
+              >
+                Clear All
+              </Button>
+            )}
+            <Button onClick={() => setLearnedRulesOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
