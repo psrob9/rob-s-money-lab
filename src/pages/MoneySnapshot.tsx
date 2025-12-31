@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight } from "lucide-react";
+import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -207,6 +207,9 @@ const MoneySnapshot = () => {
   const [formatHelpOpen, setFormatHelpOpen] = useState(false);
   const [fileName, setFileName] = useState<string>("");
   const [uncategorizedOpen, setUncategorizedOpen] = useState(false);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insights, setInsights] = useState<string | null>(null);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
 
   // Get first 20 uncategorized transactions for debug view
   const uncategorizedTransactions = useMemo(() => {
@@ -218,6 +221,67 @@ const MoneySnapshot = () => {
       })
       .slice(0, 20);
   }, [transactions]);
+
+  // Count all uncategorized transactions
+  const uncategorizedCount = useMemo(() => {
+    return transactions.filter(txn => {
+      if (txn.amount >= 0) return false;
+      const { category } = categorizeTransaction(txn.description, txn.amount);
+      return category === "Uncategorized";
+    }).length;
+  }, [transactions]);
+
+  const fetchInsights = useCallback(async () => {
+    if (!analysis || categoryBreakdown.length === 0) return;
+    
+    setInsightsLoading(true);
+    setInsightsError(null);
+    
+    try {
+      const response = await fetch(
+        "https://kjshbagskpzfbpfpucvq.supabase.co/functions/v1/generate-insights",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            totalIn: analysis.totalIn,
+            totalOut: analysis.totalOut,
+            net: analysis.net,
+            monthsSpan: analysis.monthsSpan,
+            categories: categoryBreakdown.map(cat => ({
+              name: cat.name,
+              total: cat.total,
+              percentage: cat.percentage,
+            })),
+            uncategorizedCount,
+            transactionCount: transactions.length,
+          }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get insights");
+      }
+      
+      setInsights(data.insights);
+    } catch (error) {
+      console.error("Error fetching insights:", error);
+      setInsightsError("Couldn't get insights right now. Want to try again?");
+    } finally {
+      setInsightsLoading(false);
+    }
+  }, [analysis, categoryBreakdown, uncategorizedCount, transactions.length]);
+
+  // Fetch insights when results are displayed
+  useEffect(() => {
+    if (step === "results" && analysis && !insights && !insightsLoading && !insightsError) {
+      fetchInsights();
+    }
+  }, [step, analysis, insights, insightsLoading, insightsError, fetchInsights]);
 
   const parseAmount = (value: string | number): number => {
     if (typeof value === "number") return value;
@@ -393,6 +457,9 @@ const MoneySnapshot = () => {
     setAnalysis(null);
     setCategoryBreakdown([]);
     setFileName("");
+    setInsights(null);
+    setInsightsError(null);
+    setInsightsLoading(false);
   };
 
   const formatCurrency = (amount: number): string => {
@@ -672,13 +739,52 @@ const MoneySnapshot = () => {
               {/* Patterns */}
               <Card className="border-border shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg text-lab-navy">Patterns</CardTitle>
+                  <CardTitle className="text-lg text-lab-navy flex items-center gap-2">
+                    <Sparkles size={20} className="text-lab-amber" />
+                    Patterns
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="py-8 text-center">
-                    <p className="text-lab-warm-gray text-sm">AI-powered insights coming soon</p>
-                    <p className="text-muted-foreground text-xs mt-1">Get personalized observations about your spending</p>
-                  </div>
+                  {insightsLoading && (
+                    <div className="py-8 text-center">
+                      <Loader2 size={24} className="mx-auto mb-3 text-lab-teal animate-spin" />
+                      <p className="text-lab-warm-gray text-sm">Getting AI insights...</p>
+                    </div>
+                  )}
+                  
+                  {insightsError && !insightsLoading && (
+                    <div className="py-6 text-center">
+                      <p className="text-lab-warm-gray text-sm mb-4">{insightsError}</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={fetchInsights}
+                        className="text-lab-teal border-lab-teal/30 hover:bg-lab-teal/5"
+                      >
+                        <RefreshCw size={14} className="mr-2" />
+                        Try again
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {insights && !insightsLoading && (
+                    <div className="space-y-4">
+                      <div className="text-lab-warm-gray text-sm leading-relaxed whitespace-pre-wrap">
+                        {insights}
+                      </div>
+                      <p className="text-xs text-muted-foreground pt-3 border-t border-border/50 flex items-center gap-1">
+                        <Sparkles size={12} className="text-lab-amber" />
+                        Powered by Claude
+                      </p>
+                    </div>
+                  )}
+                  
+                  {!insights && !insightsLoading && !insightsError && (
+                    <div className="py-8 text-center">
+                      <p className="text-lab-warm-gray text-sm">AI-powered insights</p>
+                      <p className="text-muted-foreground text-xs mt-1">Get personalized observations about your spending</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
