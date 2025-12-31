@@ -22,12 +22,147 @@ interface AnalysisResult {
   monthsSpan: number;
 }
 
+interface CategoryBreakdown {
+  name: string;
+  total: number;
+  percentage: number;
+  color: string;
+}
+
+interface CategoryConfig {
+  name: string;
+  keywords: string[];
+  color: string;
+}
+
+const CATEGORIES: CategoryConfig[] = [
+  {
+    name: "Food & Dining",
+    keywords: ["restaurant", "doordash", "uber eats", "grubhub", "chipotle", "mcdonald", "starbucks", "dunkin", "pizza", "sushi", "thai", "chinese", "mexican", "burger", "cafe", "coffee", "diner", "grill", "kitchen", "bistro", "taco", "wing", "sub", "sandwich", "bakery", "deli", "bar & grill", "chick-fil-a", "wendy", "panera", "five guys", "sweetgreen", "cava"],
+    color: "bg-orange-500",
+  },
+  {
+    name: "Groceries",
+    keywords: ["walmart", "kroger", "safeway", "trader joe", "whole foods", "aldi", "costco", "target", "publix", "heb", "wegmans", "giant", "food lion", "stop & shop", "sprouts", "grocery", "market", "supermarket"],
+    color: "bg-green-500",
+  },
+  {
+    name: "Transportation",
+    keywords: ["uber", "lyft", "gas", "shell", "chevron", "exxon", "bp", "mobil", "speedway", "wawa", "parking", "toll", "metro", "transit", "amtrak", "airline", "united", "delta", "american air", "southwest", "spirit", "frontier"],
+    color: "bg-blue-500",
+  },
+  {
+    name: "Shopping",
+    keywords: ["amazon", "ebay", "etsy", "best buy", "home depot", "lowes", "ikea", "wayfair", "tj maxx", "marshalls", "ross", "nordstrom", "macy", "kohls", "old navy", "gap", "nike", "adidas", "apple store"],
+    color: "bg-purple-500",
+  },
+  {
+    name: "Subscriptions & Entertainment",
+    keywords: ["netflix", "spotify", "hulu", "disney+", "hbo", "youtube", "apple music", "amazon prime", "audible", "kindle", "patreon", "twitch", "playstation", "xbox", "steam", "nintendo", "movie", "cinema", "theater", "amc", "regal"],
+    color: "bg-pink-500",
+  },
+  {
+    name: "Utilities & Bills",
+    keywords: ["electric", "water", "gas bill", "internet", "comcast", "verizon", "at&t", "t-mobile", "sprint", "xfinity", "spectrum", "cox", "power", "utility", "sewage", "trash", "waste"],
+    color: "bg-slate-500",
+  },
+  {
+    name: "Healthcare",
+    keywords: ["pharmacy", "cvs", "walgreens", "doctor", "hospital", "medical", "dental", "vision", "health", "urgent care", "clinic", "lab", "prescription", "rx"],
+    color: "bg-red-500",
+  },
+  {
+    name: "Housing",
+    keywords: ["rent", "mortgage", "hoa", "property", "insurance", "home", "apartment", "lease"],
+    color: "bg-amber-500",
+  },
+  {
+    name: "Transfers & Payments",
+    keywords: ["transfer", "payment", "paypal", "venmo", "zelle", "cash app", "wire", "ach", "direct deposit"],
+    color: "bg-gray-400",
+  },
+  {
+    name: "Income",
+    keywords: ["payroll", "direct deposit", "salary", "deposit", "refund", "reimbursement"],
+    color: "bg-emerald-500",
+  },
+];
+
+const categorizeTransaction = (description: string, amount: number): { category: string; color: string } => {
+  const lowerDesc = description.toLowerCase();
+  
+  // Check for Income first if amount is positive
+  if (amount > 0) {
+    const incomeCategory = CATEGORIES.find(c => c.name === "Income");
+    if (incomeCategory && incomeCategory.keywords.some(k => lowerDesc.includes(k))) {
+      return { category: incomeCategory.name, color: incomeCategory.color };
+    }
+  }
+  
+  // Check other categories
+  for (const cat of CATEGORIES) {
+    if (cat.name === "Income") continue; // Skip income for expenses
+    if (cat.keywords.some(keyword => lowerDesc.includes(keyword))) {
+      return { category: cat.name, color: cat.color };
+    }
+  }
+  
+  return { category: "Uncategorized", color: "bg-neutral-400" };
+};
+
+const calculateCategoryBreakdown = (txns: Transaction[]): CategoryBreakdown[] => {
+  const categoryTotals: Record<string, { total: number; color: string }> = {};
+  
+  // Only process expenses (negative amounts), exclude transfers
+  txns.forEach(txn => {
+    if (txn.amount >= 0) return; // Skip income
+    
+    const { category, color } = categorizeTransaction(txn.description, txn.amount);
+    if (category === "Transfers & Payments" || category === "Income") return; // Skip transfers from spending
+    
+    const absAmount = Math.abs(txn.amount);
+    if (!categoryTotals[category]) {
+      categoryTotals[category] = { total: 0, color };
+    }
+    categoryTotals[category].total += absAmount;
+  });
+  
+  // Calculate total spending
+  const totalSpending = Object.values(categoryTotals).reduce((sum, cat) => sum + cat.total, 0);
+  
+  // Convert to array and sort by total (highest first)
+  let breakdown = Object.entries(categoryTotals)
+    .map(([name, { total, color }]) => ({
+      name,
+      total,
+      percentage: totalSpending > 0 ? (total / totalSpending) * 100 : 0,
+      color,
+    }))
+    .sort((a, b) => b.total - a.total);
+  
+  // If more than 8 categories, group the rest as "Other"
+  if (breakdown.length > 8) {
+    const top8 = breakdown.slice(0, 8);
+    const rest = breakdown.slice(8);
+    const otherTotal = rest.reduce((sum, cat) => sum + cat.total, 0);
+    const otherPercentage = rest.reduce((sum, cat) => sum + cat.percentage, 0);
+    
+    breakdown = [
+      ...top8,
+      { name: "Other", total: otherTotal, percentage: otherPercentage, color: "bg-neutral-300" },
+    ];
+  }
+  
+  return breakdown;
+};
+
 type ToolStep = "upload" | "processing" | "results";
 
 const MoneySnapshot = () => {
   const [step, setStep] = useState<ToolStep>("upload");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [formatHelpOpen, setFormatHelpOpen] = useState(false);
   const [fileName, setFileName] = useState<string>("");
@@ -164,6 +299,7 @@ const MoneySnapshot = () => {
 
         setTransactions(parsedTransactions);
         setAnalysis(analyzeTransactions(parsedTransactions));
+        setCategoryBreakdown(calculateCategoryBreakdown(parsedTransactions));
         setStep("results");
       },
       error: () => {
@@ -203,6 +339,7 @@ const MoneySnapshot = () => {
     setStep("upload");
     setTransactions([]);
     setAnalysis(null);
+    setCategoryBreakdown([]);
     setFileName("");
   };
 
@@ -379,10 +516,41 @@ const MoneySnapshot = () => {
                   <CardTitle className="text-lg text-lab-navy">Where It Goes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="py-8 text-center">
-                    <p className="text-lab-warm-gray text-sm">Category breakdown coming soon</p>
-                    <p className="text-muted-foreground text-xs mt-1">We're working on smart categorization</p>
-                  </div>
+                  {categoryBreakdown.length > 0 ? (
+                    <div className="space-y-3">
+                      {categoryBreakdown.map((cat) => {
+                        const maxPercentage = categoryBreakdown[0]?.percentage || 100;
+                        const barWidth = (cat.percentage / maxPercentage) * 100;
+                        
+                        return (
+                          <div key={cat.name} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="font-medium text-lab-navy">{cat.name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-lab-navy">{formatCurrency(cat.total)}</span>
+                                <span className="text-muted-foreground text-xs w-12 text-right">
+                                  {cat.percentage.toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                              <div
+                                className={`h-full ${cat.color} opacity-70 rounded-full transition-all duration-500`}
+                                style={{ width: `${barWidth}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <p className="text-xs text-muted-foreground mt-4 pt-2 border-t border-border">
+                        Categories detected automatically based on transaction descriptions
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <p className="text-lab-warm-gray text-sm">No spending categories detected</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
