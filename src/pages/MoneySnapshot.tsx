@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Layout } from "@/components/Layout";
-import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react";
+import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import Papa from "papaparse";
 
 interface Transaction {
@@ -166,6 +167,18 @@ const MoneySnapshot = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [formatHelpOpen, setFormatHelpOpen] = useState(false);
   const [fileName, setFileName] = useState<string>("");
+  const [uncategorizedOpen, setUncategorizedOpen] = useState(false);
+
+  // Get first 20 uncategorized transactions for debug view
+  const uncategorizedTransactions = useMemo(() => {
+    return transactions
+      .filter(txn => {
+        if (txn.amount >= 0) return false; // Skip income
+        const { category } = categorizeTransaction(txn.description, txn.amount);
+        return category === "Uncategorized";
+      })
+      .slice(0, 20);
+  }, [transactions]);
 
   const parseAmount = (value: string | number): number => {
     if (typeof value === "number") return value;
@@ -521,6 +534,69 @@ const MoneySnapshot = () => {
                       {categoryBreakdown.map((cat) => {
                         const maxPercentage = categoryBreakdown[0]?.percentage || 100;
                         const barWidth = (cat.percentage / maxPercentage) * 100;
+                        
+                        // Make Uncategorized expandable for debugging
+                        if (cat.name === "Uncategorized" && uncategorizedTransactions.length > 0) {
+                          return (
+                            <Collapsible 
+                              key={cat.name} 
+                              open={uncategorizedOpen} 
+                              onOpenChange={setUncategorizedOpen}
+                            >
+                              <CollapsibleTrigger className="w-full text-left">
+                                <div className="space-y-1 p-1 -m-1 rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="font-medium text-lab-navy flex items-center gap-1">
+                                      <ChevronRight 
+                                        size={14} 
+                                        className={`text-muted-foreground transition-transform ${uncategorizedOpen ? 'rotate-90' : ''}`} 
+                                      />
+                                      {cat.name}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-lab-navy">{formatCurrency(cat.total)}</span>
+                                      <span className="text-muted-foreground text-xs w-12 text-right">
+                                        {cat.percentage.toFixed(1)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full ${cat.color} opacity-70 rounded-full transition-all duration-500`}
+                                      style={{ width: `${barWidth}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <div className="mt-2 ml-4 p-3 bg-secondary/30 rounded-lg border border-border/50">
+                                  <ScrollArea className="max-h-[200px]">
+                                    <div className="space-y-1.5">
+                                      {uncategorizedTransactions.map((txn, idx) => (
+                                        <div 
+                                          key={idx} 
+                                          className="flex items-center justify-between text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0"
+                                        >
+                                          <span className="truncate max-w-[200px] sm:max-w-[280px]" title={txn.description}>
+                                            {txn.description.length > 50 
+                                              ? txn.description.substring(0, 50) + "..." 
+                                              : txn.description}
+                                          </span>
+                                          <span className="font-mono text-lab-navy ml-2 flex-shrink-0">
+                                            {formatCurrency(Math.abs(txn.amount))}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </ScrollArea>
+                                  <p className="text-xs text-muted-foreground italic mt-3 pt-2 border-t border-border/30">
+                                    Seeing something that should be categorized? Let me know!
+                                  </p>
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          );
+                        }
                         
                         return (
                           <div key={cat.name} className="space-y-1">
