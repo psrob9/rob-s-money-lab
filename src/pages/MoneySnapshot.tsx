@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Layout } from "@/components/Layout";
-import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -34,6 +34,15 @@ interface CategoryConfig {
   name: string;
   keywords: string[];
   color: string;
+}
+
+interface UploadedFile {
+  id: string;
+  name: string;
+  transactions: Transaction[];
+  dateRange: { start: string; end: string };
+  status: 'parsing' | 'ready' | 'error';
+  errorMessage?: string;
 }
 
 const CATEGORIES: CategoryConfig[] = [
@@ -196,40 +205,79 @@ const calculateCategoryBreakdown = (txns: Transaction[]): CategoryBreakdown[] =>
   return breakdown;
 };
 
-type ToolStep = "upload" | "processing" | "results";
+type ToolStep = "upload" | "managing" | "results";
 
 const MoneySnapshot = () => {
   const [step, setStep] = useState<ToolStep>("upload");
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [files, setFiles] = useState<UploadedFile[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [formatHelpOpen, setFormatHelpOpen] = useState(false);
-  const [fileName, setFileName] = useState<string>("");
   const [uncategorizedOpen, setUncategorizedOpen] = useState(false);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insights, setInsights] = useState<string | null>(null);
   const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [filesExpanded, setFilesExpanded] = useState(false);
+
+  // Computed values from files
+  const allTransactions = useMemo(() => {
+    return files
+      .filter(f => f.status === 'ready')
+      .flatMap(f => f.transactions);
+  }, [files]);
+
+  const readyFiles = useMemo(() => files.filter(f => f.status === 'ready'), [files]);
+
+  const combinedDateRange = useMemo(() => {
+    if (readyFiles.length === 0) return null;
+    
+    let earliest: Date | null = null;
+    let latest: Date | null = null;
+    
+    readyFiles.forEach(file => {
+      const start = new Date(file.dateRange.start);
+      const end = new Date(file.dateRange.end);
+      
+      if (!isNaN(start.getTime()) && (!earliest || start < earliest)) {
+        earliest = start;
+      }
+      if (!isNaN(end.getTime()) && (!latest || end > latest)) {
+        latest = end;
+      }
+    });
+    
+    if (!earliest || !latest) return null;
+    
+    return {
+      start: earliest.toLocaleDateString(),
+      end: latest.toLocaleDateString()
+    };
+  }, [readyFiles]);
+
+  const totalTransactionCount = useMemo(() => {
+    return readyFiles.reduce((sum, f) => sum + f.transactions.length, 0);
+  }, [readyFiles]);
 
   // Get first 20 uncategorized transactions for debug view
   const uncategorizedTransactions = useMemo(() => {
-    return transactions
+    return allTransactions
       .filter(txn => {
         if (txn.amount >= 0) return false; // Skip income
         const { category } = categorizeTransaction(txn.description, txn.amount);
         return category === "Uncategorized";
       })
       .slice(0, 20);
-  }, [transactions]);
+  }, [allTransactions]);
 
   // Count all uncategorized transactions
   const uncategorizedCount = useMemo(() => {
-    return transactions.filter(txn => {
+    return allTransactions.filter(txn => {
       if (txn.amount >= 0) return false;
       const { category } = categorizeTransaction(txn.description, txn.amount);
       return category === "Uncategorized";
     }).length;
-  }, [transactions]);
+  }, [allTransactions]);
 
   const fetchInsights = useCallback(async () => {
     if (!analysis || categoryBreakdown.length === 0) return;
@@ -256,7 +304,7 @@ const MoneySnapshot = () => {
               percentage: cat.percentage,
             })),
             uncategorizedCount,
-            transactionCount: transactions.length,
+            transactionCount: allTransactions.length,
           }),
         }
       );
@@ -274,9 +322,7 @@ const MoneySnapshot = () => {
     } finally {
       setInsightsLoading(false);
     }
-  }, [analysis, categoryBreakdown, uncategorizedCount, transactions.length]);
-
-  // AI insights are now opt-in - user must click button to fetch
+  }, [analysis, categoryBreakdown, uncategorizedCount, allTransactions.length]);
 
   const parseAmount = (value: string | number): number => {
     if (typeof value === "number") return value;
@@ -349,16 +395,34 @@ const MoneySnapshot = () => {
     return -1;
   };
 
-  const processCSV = (file: File) => {
-    setStep("processing");
-    setFileName(file.name);
+  const calculateDateRange = (txns: Transaction[]): { start: string; end: string } => {
+    let minDate: Date | null = null;
+    let maxDate: Date | null = null;
 
+    txns.forEach(txn => {
+      const date = parseDate(txn.date);
+      if (date) {
+        if (!minDate || date < minDate) minDate = date;
+        if (!maxDate || date > maxDate) maxDate = date;
+      }
+    });
+
+    return {
+      start: minDate ? minDate.toLocaleDateString() : "Unknown",
+      end: maxDate ? maxDate.toLocaleDateString() : "Unknown"
+    };
+  };
+
+  const parseCSVFile = (file: File, fileId: string) => {
     Papa.parse(file, {
       complete: (results) => {
         const rows = results.data as string[][];
         if (rows.length < 2) {
-          // Not enough data
-          setStep("upload");
+          setFiles(prev => prev.map(f => 
+            f.id === fileId 
+              ? { ...f, status: 'error' as const, errorMessage: 'Not enough data' }
+              : f
+          ));
           return;
         }
 
@@ -404,28 +468,81 @@ const MoneySnapshot = () => {
         });
 
         if (parsedTransactions.length === 0) {
-          setStep("upload");
+          setFiles(prev => prev.map(f => 
+            f.id === fileId 
+              ? { ...f, status: 'error' as const, errorMessage: 'No transactions found' }
+              : f
+          ));
           return;
         }
 
-        setTransactions(parsedTransactions);
-        setAnalysis(analyzeTransactions(parsedTransactions));
-        setCategoryBreakdown(calculateCategoryBreakdown(parsedTransactions));
-        setStep("results");
+        const dateRange = calculateDateRange(parsedTransactions);
+
+        setFiles(prev => prev.map(f => 
+          f.id === fileId 
+            ? { ...f, status: 'ready' as const, transactions: parsedTransactions, dateRange }
+            : f
+        ));
       },
       error: () => {
-        setStep("upload");
+        setFiles(prev => prev.map(f => 
+          f.id === fileId 
+            ? { ...f, status: 'error' as const, errorMessage: 'Failed to parse file' }
+            : f
+        ));
       },
     });
+  };
+
+  const addFiles = (fileList: FileList) => {
+    const newFiles: UploadedFile[] = [];
+    
+    Array.from(fileList).forEach(file => {
+      if (!file.name.endsWith('.csv')) return;
+      
+      const fileId = crypto.randomUUID();
+      newFiles.push({
+        id: fileId,
+        name: file.name,
+        transactions: [],
+        dateRange: { start: '', end: '' },
+        status: 'parsing'
+      });
+      
+      // Parse each file
+      setTimeout(() => parseCSVFile(file, fileId), 0);
+    });
+    
+    if (newFiles.length > 0) {
+      setFiles(prev => [...prev, ...newFiles]);
+      setStep("managing");
+    }
+  };
+
+  const removeFile = (id: string) => {
+    setFiles(prev => {
+      const updated = prev.filter(f => f.id !== id);
+      if (updated.length === 0) {
+        setStep("upload");
+      }
+      return updated;
+    });
+  };
+
+  const analyzeAllFiles = () => {
+    if (allTransactions.length === 0) return;
+    
+    setAnalysis(analyzeTransactions(allTransactions));
+    setCategoryBreakdown(calculateCategoryBreakdown(allTransactions));
+    setStep("results");
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     
-    const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith(".csv")) {
-      processCSV(file);
+    if (e.dataTransfer.files.length > 0) {
+      addFiles(e.dataTransfer.files);
     }
   }, []);
 
@@ -440,21 +557,22 @@ const MoneySnapshot = () => {
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      processCSV(file);
+    if (e.target.files && e.target.files.length > 0) {
+      addFiles(e.target.files);
     }
+    // Reset input so same files can be selected again
+    e.target.value = '';
   };
 
   const handleReset = () => {
     setStep("upload");
-    setTransactions([]);
+    setFiles([]);
     setAnalysis(null);
     setCategoryBreakdown([]);
-    setFileName("");
     setInsights(null);
     setInsightsError(null);
     setInsightsLoading(false);
+    setFilesExpanded(false);
   };
 
   const formatCurrency = (amount: number): string => {
@@ -465,6 +583,8 @@ const MoneySnapshot = () => {
       maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  const isParsing = files.some(f => f.status === 'parsing');
 
   return (
     <Layout>
@@ -479,7 +599,7 @@ const MoneySnapshot = () => {
               See where your money actually goes in 60 seconds
             </p>
             <p className="text-lab-warm-gray">
-              Upload a bank statement CSV. Your transactions are analyzed in your browser. Only spending summaries are shared if you opt into AI insights.
+              Upload bank statement CSVs from multiple accounts. Your transactions are analyzed in your browser. Only spending summaries are shared if you opt into AI insights.
             </p>
           </div>
 
@@ -500,6 +620,7 @@ const MoneySnapshot = () => {
                 <input
                   type="file"
                   accept=".csv"
+                  multiple
                   onChange={handleFileSelect}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
@@ -510,10 +631,10 @@ const MoneySnapshot = () => {
                   }`} 
                 />
                 <p className="text-lg font-medium text-lab-navy mb-2">
-                  Drop your CSV here or click to browse
+                  Drop your CSV files here or click to browse
                 </p>
                 <p className="text-sm text-lab-warm-gray">
-                  Most banks let you export transactions as CSV from your online banking.
+                  Upload from multiple bank accounts and credit cards at once.
                 </p>
               </div>
 
@@ -521,7 +642,7 @@ const MoneySnapshot = () => {
               <div className="flex items-start gap-3 p-4 bg-lab-teal/5 rounded-lg border border-lab-teal/20">
                 <Lock size={20} className="text-lab-teal mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-lab-warm-gray">
-                  <span className="font-medium text-lab-navy">Privacy first:</span> Your file is processed entirely in your browser. Nothing is uploaded to any server.
+                  <span className="font-medium text-lab-navy">Privacy first:</span> Your files are processed entirely in your browser. Nothing is uploaded to any server.
                 </p>
               </div>
 
@@ -557,14 +678,113 @@ const MoneySnapshot = () => {
             </div>
           )}
 
-          {/* Step 2: Processing */}
-          {step === "processing" && (
-            <div className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lab-teal/10 mb-6">
-                <RefreshCw size={32} className="text-lab-teal animate-spin" />
+          {/* Step 2: Managing Files */}
+          {step === "managing" && (
+            <div className="space-y-6">
+              {/* File List */}
+              <Card className="border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg text-lab-navy">Your Files</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {files.map(file => (
+                    <div 
+                      key={file.id}
+                      className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {file.status === 'parsing' && (
+                          <Loader2 size={18} className="text-lab-teal animate-spin flex-shrink-0" />
+                        )}
+                        {file.status === 'ready' && (
+                          <Check size={18} className="text-lab-sage flex-shrink-0" />
+                        )}
+                        {file.status === 'error' && (
+                          <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-lab-navy truncate">{file.name}</p>
+                          {file.status === 'ready' && (
+                            <p className="text-xs text-muted-foreground">
+                              {file.dateRange.start} – {file.dateRange.end} • {file.transactions.length} transactions
+                            </p>
+                          )}
+                          {file.status === 'parsing' && (
+                            <p className="text-xs text-muted-foreground">Parsing...</p>
+                          )}
+                          {file.status === 'error' && (
+                            <p className="text-xs text-red-500">{file.errorMessage || "Couldn't read this file"}</p>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="flex-shrink-0 h-8 w-8 text-muted-foreground hover:text-red-500"
+                        onClick={() => removeFile(file.id)}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  ))}
+
+                  {/* Add More Files */}
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      multiple
+                      onChange={handleFileSelect}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-border rounded-lg hover:border-lab-teal/50 hover:bg-secondary/30 transition-colors cursor-pointer">
+                      <Plus size={16} className="text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Add more files</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Combined Summary */}
+              {readyFiles.length > 0 && (
+                <div className="p-4 bg-lab-teal/5 rounded-lg border border-lab-teal/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-lab-navy">Combined</p>
+                      <p className="text-xs text-muted-foreground">
+                        {totalTransactionCount} transactions
+                        {combinedDateRange && ` • ${combinedDateRange.start} – ${combinedDateRange.end}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Analyze Button */}
+              <Button
+                onClick={analyzeAllFiles}
+                disabled={readyFiles.length === 0 || isParsing}
+                className="w-full bg-lab-teal hover:bg-lab-teal/90 text-white py-6 text-lg"
+              >
+                {isParsing ? (
+                  <>
+                    <Loader2 size={20} className="mr-2 animate-spin" />
+                    Processing files...
+                  </>
+                ) : (
+                  <>
+                    Analyze {readyFiles.length === 1 ? 'File' : `All ${readyFiles.length} Files`}
+                  </>
+                )}
+              </Button>
+
+              {/* Privacy Note */}
+              <div className="flex items-start gap-3 p-4 bg-secondary/30 rounded-lg">
+                <Lock size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  All processing happens in your browser. Your transactions never leave your device.
+                </p>
               </div>
-              <p className="text-lg font-medium text-lab-navy mb-2">Analyzing your transactions...</p>
-              <p className="text-sm text-lab-warm-gray">{fileName}</p>
             </div>
           )}
 
@@ -572,13 +792,33 @@ const MoneySnapshot = () => {
           {step === "results" && analysis && (
             <div className="space-y-6">
               {/* File indicator */}
-              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-                <div className="flex items-center gap-2 text-sm">
-                  <FileText size={16} className="text-lab-teal" />
-                  <span className="text-lab-warm-gray">{fileName}</span>
-                  <span className="text-muted-foreground">• {transactions.length} transactions</span>
-                </div>
-              </div>
+              <Collapsible open={filesExpanded} onOpenChange={setFilesExpanded}>
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors">
+                    <div className="flex items-center gap-2 text-sm">
+                      <FileText size={16} className="text-lab-teal" />
+                      <span className="text-lab-navy font-medium">
+                        {readyFiles.length} {readyFiles.length === 1 ? 'file' : 'files'}
+                      </span>
+                      <span className="text-muted-foreground">• {totalTransactionCount} transactions</span>
+                    </div>
+                    <ChevronDown 
+                      size={16} 
+                      className={`text-muted-foreground transition-transform ${filesExpanded ? 'rotate-180' : ''}`} 
+                    />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="mt-2 p-3 bg-secondary/30 rounded-lg space-y-2">
+                    {readyFiles.map(file => (
+                      <div key={file.id} className="flex items-center justify-between text-sm">
+                        <span className="text-lab-navy truncate">{file.name}</span>
+                        <span className="text-muted-foreground text-xs">{file.transactions.length} transactions</span>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* The Big Picture */}
               <Card className="border-border shadow-sm">
@@ -720,11 +960,18 @@ const MoneySnapshot = () => {
                           <div key={cat.name} className="space-y-1">
                             <div className="flex items-center justify-between text-sm">
                               <span className="font-medium text-lab-navy">{cat.name}</span>
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-lab-navy">{formatCurrency(cat.total)}</span>
-                                <span className="text-muted-foreground text-xs w-12 text-right">
-                                  {cat.percentage.toFixed(1)}%
-                                </span>
+                              <div className="flex flex-col items-end">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-lab-navy">{formatCurrency(cat.total)}</span>
+                                  <span className="text-muted-foreground text-xs w-12 text-right">
+                                    {cat.percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+                                {analysis.monthsSpan > 1 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatCurrency(Math.round(cat.total / analysis.monthsSpan))}/mo avg
+                                  </span>
+                                )}
                               </div>
                             </div>
                             <div className="h-2 bg-secondary rounded-full overflow-hidden">
