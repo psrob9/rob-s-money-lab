@@ -6,8 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -16,7 +18,9 @@ import {
   calculateRecurringSummary,
   RecurringTransaction,
   RecurringSummary,
-  Transaction
+  Transaction,
+  Frequency,
+  Confidence
 } from "@/utils/recurringDetection";
 
 interface UploadedFile {
@@ -25,6 +29,16 @@ interface UploadedFile {
   transactions: Transaction[];
   error?: string;
 }
+
+type SortOption = 'monthly-desc' | 'monthly-asc' | 'merchant-asc' | 'occurrences-desc' | 'confidence-desc';
+
+const FREQUENCY_OPTIONS: Frequency[] = ['weekly', 'bi-weekly', 'monthly', 'quarterly', 'annual', 'irregular'];
+const CONFIDENCE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'high', label: 'High only' },
+  { value: 'high-medium', label: 'High + Medium' },
+  { value: 'low', label: 'Low only' }
+];
 
 const TrueMonthlyCost = () => {
   const { toast } = useToast();
@@ -38,6 +52,12 @@ const TrueMonthlyCost = () => {
   const [recurringItems, setRecurringItems] = useState<RecurringTransaction[]>([]);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
   
+  // Filter state
+  const [selectedFrequencies, setSelectedFrequencies] = useState<Set<Frequency>>(new Set(FREQUENCY_OPTIONS));
+  const [confidenceFilter, setConfidenceFilter] = useState<string>('high-medium'); // Default to high + medium
+  const [sortBy, setSortBy] = useState<SortOption>('monthly-desc');
+  const [showExcluded, setShowExcluded] = useState(false);
+  
   // AI insights state
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
@@ -46,7 +66,56 @@ const TrueMonthlyCost = () => {
   // Expanded rows state
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  // Calculate summary from current items
+  // Filter and sort items
+  const filteredItems = useMemo(() => {
+    let items = [...recurringItems];
+    
+    // Filter by frequency
+    items = items.filter(item => selectedFrequencies.has(item.frequency));
+    
+    // Filter by confidence
+    switch (confidenceFilter) {
+      case 'high':
+        items = items.filter(item => item.confidence === 'high');
+        break;
+      case 'high-medium':
+        items = items.filter(item => item.confidence === 'high' || item.confidence === 'medium');
+        break;
+      case 'low':
+        items = items.filter(item => item.confidence === 'low');
+        break;
+      // 'all' shows everything
+    }
+    
+    // Filter excluded
+    if (!showExcluded) {
+      items = items.filter(item => !item.isExcluded);
+    }
+    
+    // Sort
+    switch (sortBy) {
+      case 'monthly-desc':
+        items.sort((a, b) => b.monthlyEquivalent - a.monthlyEquivalent);
+        break;
+      case 'monthly-asc':
+        items.sort((a, b) => a.monthlyEquivalent - b.monthlyEquivalent);
+        break;
+      case 'merchant-asc':
+        items.sort((a, b) => a.merchant.localeCompare(b.merchant));
+        break;
+      case 'occurrences-desc':
+        items.sort((a, b) => b.occurrences - a.occurrences);
+        break;
+      case 'confidence-desc':
+        const confidenceOrder: Record<Confidence, number> = { high: 3, medium: 2, low: 1 };
+        items.sort((a, b) => confidenceOrder[b.confidence] - confidenceOrder[a.confidence]);
+        break;
+    }
+    
+    return items;
+  }, [recurringItems, selectedFrequencies, confidenceFilter, sortBy, showExcluded]);
+
+  // Calculate summary from current items (only included items with at least low confidence)
   const summary: RecurringSummary = useMemo(() => {
     return calculateRecurringSummary(recurringItems);
   }, [recurringItems]);
@@ -62,14 +131,10 @@ const TrueMonthlyCost = () => {
             const transactions: Transaction[] = [];
             
             for (const row of results.data as Record<string, string>[]) {
-              // Try to find date column
               const dateValue = row['Date'] || row['date'] || row['Transaction Date'] || row['Posted Date'] || row['Posting Date'];
-              // Try to find description column
               const description = row['Description'] || row['description'] || row['Merchant'] || row['Name'] || row['Payee'] || row['DESCRIPTION'];
-              // Try to find amount column
               let amount = parseFloat(row['Amount'] || row['amount'] || row['AMOUNT'] || '0');
               
-              // Handle debit/credit columns
               if (row['Debit'] && !isNaN(parseFloat(row['Debit']))) {
                 amount = -Math.abs(parseFloat(row['Debit']));
               } else if (row['Credit'] && !isNaN(parseFloat(row['Credit']))) {
@@ -78,7 +143,6 @@ const TrueMonthlyCost = () => {
               
               if (!dateValue || !description) continue;
               
-              // Parse date
               const date = new Date(dateValue);
               if (isNaN(date.getTime())) continue;
               
@@ -112,7 +176,6 @@ const TrueMonthlyCost = () => {
       return;
     }
     
-    // Add files with pending status
     const newFiles: UploadedFile[] = csvFiles.map(file => ({
       file,
       status: 'pending' as const,
@@ -121,7 +184,6 @@ const TrueMonthlyCost = () => {
     
     setUploadedFiles(prev => [...prev, ...newFiles]);
     
-    // Parse each file
     for (const uploadedFile of newFiles) {
       setUploadedFiles(prev => prev.map(f => 
         f.file === uploadedFile.file ? { ...f, status: 'parsing' } : f
@@ -144,21 +206,17 @@ const TrueMonthlyCost = () => {
     }
   }, [parseFile, toast]);
 
-  // Remove a file
   const removeFile = useCallback((file: File) => {
     setUploadedFiles(prev => prev.filter(f => f.file !== file));
   }, []);
 
-  // Run analysis on all uploaded transactions
   const runAnalysis = useCallback(() => {
     setIsAnalyzing(true);
     
-    // Combine all transactions
     const allTransactions = uploadedFiles
       .filter(f => f.status === 'ready')
       .flatMap(f => f.transactions);
     
-    // Find recurring transactions
     const recurring = findRecurringTransactions(allTransactions);
     
     setRecurringItems(recurring);
@@ -172,22 +230,19 @@ const TrueMonthlyCost = () => {
     });
   }, [uploadedFiles, toast]);
 
-  // Update frequency for an item
-  const updateFrequency = useCallback((id: string, frequency: RecurringTransaction['frequency']) => {
+  const updateFrequency = useCallback((id: string, frequency: Frequency) => {
     setRecurringItems(prev => prev.map(item => {
       if (item.id !== id) return item;
       return recalculateMonthlyEquivalent({ ...item, frequency });
     }));
   }, []);
 
-  // Toggle exclude for an item
   const toggleExclude = useCallback((id: string) => {
     setRecurringItems(prev => prev.map(item => 
       item.id === id ? { ...item, isExcluded: !item.isExcluded } : item
     ));
   }, []);
 
-  // Toggle row expansion
   const toggleRowExpansion = useCallback((id: string) => {
     setExpandedRows(prev => {
       const next = new Set(prev);
@@ -200,7 +255,18 @@ const TrueMonthlyCost = () => {
     });
   }, []);
 
-  // Get AI insights
+  const toggleFrequencyFilter = useCallback((freq: Frequency) => {
+    setSelectedFrequencies(prev => {
+      const next = new Set(prev);
+      if (next.has(freq)) {
+        next.delete(freq);
+      } else {
+        next.add(freq);
+      }
+      return next;
+    });
+  }, []);
+
   const getAiInsights = useCallback(async () => {
     setIsLoadingInsights(true);
     
@@ -244,7 +310,6 @@ const TrueMonthlyCost = () => {
     }
   }, [summary, recurringItems, toast]);
 
-  // Format currency
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -254,17 +319,26 @@ const TrueMonthlyCost = () => {
     }).format(amount);
   };
 
-  // Format date
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Check if ready to analyze
+  const formatFrequency = (freq: Frequency): string => {
+    switch (freq) {
+      case 'weekly': return 'Weekly';
+      case 'bi-weekly': return 'Bi-weekly';
+      case 'monthly': return 'Monthly';
+      case 'quarterly': return 'Quarterly';
+      case 'annual': return 'Annual';
+      case 'irregular': return 'Irregular';
+      case 'one-time': return 'One-time';
+    }
+  };
+
   const readyFiles = uploadedFiles.filter(f => f.status === 'ready');
   const canAnalyze = readyFiles.length > 0;
   const totalTransactions = readyFiles.reduce((sum, f) => sum + f.transactions.length, 0);
 
-  // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -281,8 +355,7 @@ const TrueMonthlyCost = () => {
     handleFiles(e.dataTransfer.files);
   };
 
-  // Confidence badge color
-  const getConfidenceBadge = (confidence: 'high' | 'medium' | 'low') => {
+  const getConfidenceBadge = (confidence: Confidence) => {
     switch (confidence) {
       case 'high':
         return <Badge variant="outline" className="bg-lab-sage/10 text-lab-sage border-lab-sage/30">High</Badge>;
@@ -451,32 +524,55 @@ const TrueMonthlyCost = () => {
                       <span className="text-2xl text-muted-foreground font-normal">/mo</span>
                     </p>
                     
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto">
-                      {summary.monthlyContribution > 0 && (
+                    <div className="text-sm text-muted-foreground mb-6">
+                      Based on {summary.itemCount} recurring items
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-w-3xl mx-auto text-sm">
+                      {summary.monthlySubscriptionCount > 0 && (
                         <div className="bg-background/50 rounded-lg p-3">
-                          <p className="text-xs text-muted-foreground">Monthly bills</p>
-                          <p className="text-lg font-semibold text-lab-navy">{formatCurrency(summary.monthlyContribution)}</p>
+                          <p className="text-xs text-muted-foreground">{summary.monthlySubscriptionCount} monthly</p>
+                          <p className="text-base font-semibold text-lab-navy">{formatCurrency(summary.monthlyContribution)}</p>
                         </div>
                       )}
-                      {summary.annualContribution > 0 && (
+                      {summary.annualSubscriptionCount > 0 && (
                         <div className="bg-background/50 rounded-lg p-3">
-                          <p className="text-xs text-muted-foreground">Annual (÷12)</p>
-                          <p className="text-lg font-semibold text-lab-navy">{formatCurrency(summary.annualContribution)}</p>
+                          <p className="text-xs text-muted-foreground">{summary.annualSubscriptionCount} annual (÷12)</p>
+                          <p className="text-base font-semibold text-lab-navy">{formatCurrency(summary.annualContribution)}</p>
                         </div>
                       )}
-                      {summary.quarterlyContribution > 0 && (
+                      {summary.quarterlySubscriptionCount > 0 && (
                         <div className="bg-background/50 rounded-lg p-3">
-                          <p className="text-xs text-muted-foreground">Quarterly (÷3)</p>
-                          <p className="text-lg font-semibold text-lab-navy">{formatCurrency(summary.quarterlyContribution)}</p>
+                          <p className="text-xs text-muted-foreground">{summary.quarterlySubscriptionCount} quarterly (÷3)</p>
+                          <p className="text-base font-semibold text-lab-navy">{formatCurrency(summary.quarterlyContribution)}</p>
                         </div>
                       )}
-                      {summary.weeklyContribution > 0 && (
+                      {summary.weeklyCount > 0 && (
                         <div className="bg-background/50 rounded-lg p-3">
-                          <p className="text-xs text-muted-foreground">Weekly (×4.33)</p>
-                          <p className="text-lg font-semibold text-lab-navy">{formatCurrency(summary.weeklyContribution)}</p>
+                          <p className="text-xs text-muted-foreground">{summary.weeklyCount} weekly (×4.33)</p>
+                          <p className="text-base font-semibold text-lab-navy">{formatCurrency(summary.weeklyContribution)}</p>
+                        </div>
+                      )}
+                      {summary.biWeeklyCount > 0 && (
+                        <div className="bg-background/50 rounded-lg p-3">
+                          <p className="text-xs text-muted-foreground">{summary.biWeeklyCount} bi-weekly (×2.17)</p>
+                          <p className="text-base font-semibold text-lab-navy">{formatCurrency(summary.biWeeklyContribution)}</p>
+                        </div>
+                      )}
+                      {summary.irregularCount > 0 && (
+                        <div className="bg-background/50 rounded-lg p-3">
+                          <p className="text-xs text-muted-foreground">{summary.irregularCount} irregular</p>
+                          <p className="text-base font-semibold text-lab-navy">{formatCurrency(summary.irregularContribution)}</p>
                         </div>
                       )}
                     </div>
+                    
+                    {summary.excludedCount > 0 && (
+                      <p className="text-xs text-muted-foreground mt-4">
+                        Excluded: {summary.excludedCount} item{summary.excludedCount !== 1 ? 's' : ''} 
+                        {!showExcluded && ' (toggle "Show excluded" to review)'}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -520,7 +616,7 @@ const TrueMonthlyCost = () => {
                         <div>
                           <h3 className="font-semibold text-lab-navy mb-1">Want AI insights about your recurring costs?</h3>
                           <p className="text-sm text-muted-foreground">
-                            Claude AI can spot overlapping subscriptions and potential savings.
+                            AI can spot overlapping subscriptions and potential savings.
                           </p>
                         </div>
                       </div>
@@ -568,9 +664,81 @@ const TrueMonthlyCost = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {recurringItems.length === 0 ? (
+                  {/* Filter Bar */}
+                  <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Filter size={16} />
+                      <span>Filters:</span>
+                    </div>
+                    
+                    {/* Frequency Filter */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          Frequency
+                          <ChevronDown size={14} className="ml-1" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2" align="start">
+                        {FREQUENCY_OPTIONS.map((freq) => (
+                          <label key={freq} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer">
+                            <Checkbox
+                              checked={selectedFrequencies.has(freq)}
+                              onCheckedChange={() => toggleFrequencyFilter(freq)}
+                            />
+                            <span className="text-sm">{formatFrequency(freq)}</span>
+                          </label>
+                        ))}
+                      </PopoverContent>
+                    </Popover>
+                    
+                    {/* Confidence Filter */}
+                    <Select value={confidenceFilter} onValueChange={setConfidenceFilter}>
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="Confidence" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONFIDENCE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Sort By */}
+                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                      <SelectTrigger className="w-[180px] h-8">
+                        <SlidersHorizontal size={14} className="mr-1" />
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly-desc">Monthly cost (high→low)</SelectItem>
+                        <SelectItem value="monthly-asc">Monthly cost (low→high)</SelectItem>
+                        <SelectItem value="merchant-asc">Merchant name (A-Z)</SelectItem>
+                        <SelectItem value="occurrences-desc">Occurrences (most first)</SelectItem>
+                        <SelectItem value="confidence-desc">Confidence (high first)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Show Excluded Toggle */}
+                    <Button
+                      variant={showExcluded ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-8 ml-auto"
+                      onClick={() => setShowExcluded(!showExcluded)}
+                    >
+                      {showExcluded ? <Eye size={14} className="mr-1" /> : <EyeOff size={14} className="mr-1" />}
+                      {showExcluded ? 'Showing excluded' : 'Show excluded'}
+                    </Button>
+                  </div>
+                  
+                  {/* Results count */}
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Showing {filteredItems.length} of {recurringItems.length} items
+                  </p>
+
+                  {filteredItems.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
-                      No recurring expenses detected. Try uploading more transaction history.
+                      No items match your current filters. Try adjusting the filters above.
                     </p>
                   ) : (
                     <div className="overflow-x-auto">
@@ -585,26 +753,26 @@ const TrueMonthlyCost = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {recurringItems.map((item) => (
+                          {filteredItems.map((item) => (
                             <>
                               <TableRow 
                                 key={item.id}
-                                className={`${item.isExcluded ? 'opacity-50' : ''} cursor-pointer hover:bg-muted/50`}
+                                className={`${item.isExcluded ? 'opacity-50 bg-muted/20' : ''} cursor-pointer hover:bg-muted/50`}
                                 onClick={() => toggleRowExpansion(item.id)}
                               >
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     {expandedRows.has(item.id) ? (
-                                      <ChevronUp size={14} className="text-muted-foreground" />
+                                      <ChevronUp size={14} className="text-muted-foreground flex-shrink-0" />
                                     ) : (
-                                      <ChevronDown size={14} className="text-muted-foreground" />
+                                      <ChevronDown size={14} className="text-muted-foreground flex-shrink-0" />
                                     )}
                                     <div>
                                       <p className="font-medium text-lab-navy">{item.merchant}</p>
                                       <div className="flex items-center gap-2 mt-1">
                                         {getConfidenceBadge(item.confidence)}
                                         <span className="text-xs text-muted-foreground">
-                                          {item.occurrences} occurrence{item.occurrences !== 1 ? 's' : ''}
+                                          {item.occurrences} occurrence{item.occurrences !== 1 ? 's' : ''} over {Math.round(item.dateSpanDays)} days
                                         </span>
                                       </div>
                                     </div>
@@ -613,16 +781,18 @@ const TrueMonthlyCost = () => {
                                 <TableCell onClick={(e) => e.stopPropagation()}>
                                   <Select
                                     value={item.frequency}
-                                    onValueChange={(val) => updateFrequency(item.id, val as RecurringTransaction['frequency'])}
+                                    onValueChange={(val) => updateFrequency(item.id, val as Frequency)}
                                   >
                                     <SelectTrigger className="w-[130px]">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="weekly">Weekly</SelectItem>
+                                      <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
                                       <SelectItem value="monthly">Monthly</SelectItem>
                                       <SelectItem value="quarterly">Quarterly</SelectItem>
                                       <SelectItem value="annual">Annual</SelectItem>
+                                      <SelectItem value="irregular">Irregular</SelectItem>
                                       <SelectItem value="one-time">One-time</SelectItem>
                                     </SelectContent>
                                   </Select>
@@ -642,9 +812,13 @@ const TrueMonthlyCost = () => {
                               </TableRow>
                               {/* Expanded Row - Transaction Details */}
                               {expandedRows.has(item.id) && (
-                                <TableRow>
+                                <TableRow key={`${item.id}-expanded`}>
                                   <TableCell colSpan={5} className="bg-muted/30 p-0">
                                     <div className="p-4">
+                                      <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+                                        <span>Avg interval: {Math.round(item.avgIntervalDays)} days</span>
+                                        <span>Interval variation: ±{Math.round(item.intervalStdDev)} days</span>
+                                      </div>
                                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                                         Recent Transactions
                                       </p>
@@ -685,6 +859,10 @@ const TrueMonthlyCost = () => {
                     setShowAiPrompt(false);
                     setAiInsights(null);
                     setExpandedRows(new Set());
+                    setSelectedFrequencies(new Set(FREQUENCY_OPTIONS));
+                    setConfidenceFilter('high-medium');
+                    setSortBy('monthly-desc');
+                    setShowExcluded(false);
                   }}
                 >
                   Start Over with New Files
