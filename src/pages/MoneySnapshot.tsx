@@ -595,20 +595,30 @@ const MoneySnapshot = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="p-4 bg-lab-sage/10 rounded-lg">
-                      <div className="flex items-center gap-1 text-lab-sage mb-1">
-                        <TrendingUp size={14} />
-                        <span className="text-xs font-medium">Money In</span>
-                      </div>
-                      <p className="text-xl font-bold text-lab-navy">{formatCurrency(analysis.totalIn)}</p>
+                  <div className="p-4 bg-lab-sage/10 rounded-lg">
+                    <div className="flex items-center gap-1 text-lab-sage mb-1">
+                      <TrendingUp size={14} />
+                      <span className="text-xs font-medium">Money In</span>
                     </div>
-                    <div className="p-4 bg-red-50 rounded-lg">
-                      <div className="flex items-center gap-1 text-red-500 mb-1">
-                        <TrendingDown size={14} />
-                        <span className="text-xs font-medium">Money Out</span>
-                      </div>
-                      <p className="text-xl font-bold text-lab-navy">{formatCurrency(analysis.totalOut)}</p>
+                    <p className="text-xl font-bold text-lab-navy">{formatCurrency(analysis.totalIn)}</p>
+                    {analysis.monthsSpan > 1 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ~{formatCurrency(Math.round(analysis.totalIn / analysis.monthsSpan))}/mo
+                      </p>
+                    )}
+                  </div>
+                  <div className="p-4 bg-red-50 rounded-lg">
+                    <div className="flex items-center gap-1 text-red-500 mb-1">
+                      <TrendingDown size={14} />
+                      <span className="text-xs font-medium">Money Out</span>
                     </div>
+                    <p className="text-xl font-bold text-lab-navy">{formatCurrency(analysis.totalOut)}</p>
+                    {analysis.monthsSpan > 1 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ~{formatCurrency(Math.round(analysis.totalOut / analysis.monthsSpan))}/mo
+                      </p>
+                    )}
+                  </div>
                     <div className={`p-4 rounded-lg ${analysis.net >= 0 ? "bg-lab-sage/10" : "bg-lab-amber/10"}`}>
                       <p className="text-xs font-medium text-lab-warm-gray mb-1">Net</p>
                       <p className={`text-xl font-bold ${analysis.net >= 0 ? "text-lab-sage" : "text-lab-amber"}`}>
@@ -659,12 +669,19 @@ const MoneySnapshot = () => {
                                       />
                                       {cat.name}
                                     </span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-semibold text-lab-navy">{formatCurrency(cat.total)}</span>
-                                      <span className="text-muted-foreground text-xs w-12 text-right">
-                                        {cat.percentage.toFixed(1)}%
-                                      </span>
-                                    </div>
+                          <div className="flex flex-col items-end">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-lab-navy">{formatCurrency(cat.total)}</span>
+                              <span className="text-muted-foreground text-xs w-12 text-right">
+                                {cat.percentage.toFixed(1)}%
+                              </span>
+                            </div>
+                            {analysis.monthsSpan > 1 && (
+                              <span className="text-xs text-muted-foreground">
+                                {formatCurrency(Math.round(cat.total / analysis.monthsSpan))}/mo avg
+                              </span>
+                            )}
+                          </div>
                                   </div>
                                   <div className="h-2 bg-secondary rounded-full overflow-hidden">
                                     <div
@@ -681,7 +698,7 @@ const MoneySnapshot = () => {
                                       {uncategorizedTransactions.map((txn, idx) => (
                                         <div 
                                           key={idx} 
-                                          className="flex items-center justify-between text-sm text-muted-foreground py-2 border-b border-border/30 last:border-0"
+                                          className="flex items-center justify-between text-sm text-muted-foreground py-2.5 border-b border-border/30 last:border-0"
                                         >
                                           <span className="truncate max-w-[200px] sm:max-w-[280px]" title={txn.description}>
                                             {txn.description.length > 50 
