@@ -2,3 +2,6 @@ project_id = "kjshbagskpzfbpfpucvq"
 
 [functions.generate-insights]
 verify_jwt = false
+
+[functions.generate-recurring-insights]
+verify_jwt = false
