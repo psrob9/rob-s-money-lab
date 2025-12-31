@@ -22,11 +22,13 @@ const Tools = () => {
               href="/tools/money-snapshot"
             />
             
-            {/* Placeholder cards for future tools */}
-            <div className="bg-card/50 rounded-xl border border-dashed border-border p-6 flex flex-col items-center justify-center min-h-[180px] text-center">
-              <p className="text-muted-foreground text-sm mb-1">New tool</p>
-              <p className="text-xs text-muted-foreground">Coming soon...</p>
-            </div>
+            <ToolCard
+              title="True Monthly Cost Calculator"
+              description="Find all your recurring costs and see what you really spend each month."
+              href="/tools/true-monthly-cost"
+            />
+            
+            {/* Placeholder card for future tools */}
             <div className="bg-card/50 rounded-xl border border-dashed border-border p-6 flex flex-col items-center justify-center min-h-[180px] text-center">
               <p className="text-muted-foreground text-sm mb-1">New tool</p>
               <p className="text-xs text-muted-foreground">Coming soon...</p>
