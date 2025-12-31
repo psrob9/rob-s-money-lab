@@ -610,18 +610,18 @@ const MoneySnapshot = () => {
                               <CollapsibleContent>
                                 <div className="mt-2 ml-4 p-3 bg-secondary/30 rounded-lg border border-border/50">
                                   <ScrollArea className="max-h-[200px]">
-                                    <div className="space-y-1.5">
+                                    <div className="space-y-0">
                                       {uncategorizedTransactions.map((txn, idx) => (
                                         <div 
                                           key={idx} 
-                                          className="flex items-center justify-between text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0"
+                                          className="flex items-center justify-between text-sm text-muted-foreground py-2 border-b border-border/30 last:border-0"
                                         >
                                           <span className="truncate max-w-[200px] sm:max-w-[280px]" title={txn.description}>
                                             {txn.description.length > 50 
                                               ? txn.description.substring(0, 50) + "..." 
                                               : txn.description}
                                           </span>
-                                          <span className="font-mono text-lab-navy ml-2 flex-shrink-0">
+                                          <span className="font-mono font-medium text-lab-navy ml-2 flex-shrink-0">
                                             {formatCurrency(Math.abs(txn.amount))}
                                           </span>
                                         </div>
