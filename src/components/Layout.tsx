@@ -99,7 +99,7 @@ export function Layout({ children }: LayoutProps) {
             </p>
             <p className="flex items-center gap-1">
               <span className="inline-block w-2 h-2 rounded-full bg-lab-sage"></span>
-              Your data never leaves your device
+              Your transaction data stays private
             </p>
             <p>© {currentYear}</p>
           </div>
