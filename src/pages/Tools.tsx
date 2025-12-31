@@ -35,7 +35,7 @@ const Tools = () => {
             </div>
           </div>
 
-          <div className="mt-16 p-8 bg-secondary/50 rounded-xl border border-border text-center">
+          <div className="mt-16 p-8 bg-amber-50/50 rounded-xl border border-amber-200/50 text-center">
             <h2 className="text-xl font-semibold text-lab-navy mb-3">
               Got an idea for a tool?
             </h2>

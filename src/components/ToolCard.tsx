@@ -15,10 +15,10 @@ export function ToolCard({ title, description, href, badge, comingSoon }: ToolCa
   return (
     <CardWrapper
       to={comingSoon ? undefined : href}
-      className={`group block bg-card rounded-xl border border-border p-6 shadow-sm transition-all duration-300 ${
+      className={`group block rounded-xl border border-border p-6 shadow-sm transition-all duration-300 ${
         comingSoon 
-          ? "opacity-90" 
-          : "hover:shadow-md hover:border-lab-teal/30 hover:-translate-y-1"
+          ? "bg-lab-teal/5 hover:border-l-4 hover:border-l-lab-teal hover:-translate-y-1" 
+          : "bg-card hover:shadow-md hover:border-l-4 hover:border-l-lab-teal hover:-translate-y-1"
       }`}
     >
       <div className="flex items-start justify-between gap-4 mb-3">
@@ -28,7 +28,7 @@ export function ToolCard({ title, description, href, badge, comingSoon }: ToolCa
         {badge && (
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
             comingSoon 
-              ? "bg-lab-amber/10 text-lab-amber" 
+              ? "bg-lab-amber text-amber-900" 
               : "bg-lab-sage/10 text-lab-sage"
           }`}>
             {badge}

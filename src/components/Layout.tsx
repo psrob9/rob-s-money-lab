@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, FlaskConical } from "lucide-react";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -93,7 +93,10 @@ export function Layout({ children }: LayoutProps) {
       <footer className="border-t border-border bg-card py-8 mt-auto">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-lab-warm-gray">
-            <p>Built with curiosity by Rob</p>
+            <p className="flex items-center gap-1.5">
+              <FlaskConical size={16} className="text-lab-teal" />
+              <span>Rob's Money Lab</span>
+            </p>
             <p className="flex items-center gap-1">
               <span className="inline-block w-2 h-2 rounded-full bg-lab-sage"></span>
               Your data never leaves your device
