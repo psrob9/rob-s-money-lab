@@ -494,11 +494,13 @@ const MoneySnapshot = () => {
     });
   };
 
-  const addFiles = (fileList: FileList) => {
+  const addFiles = useCallback((fileList: FileList) => {
     const newFiles: UploadedFile[] = [];
+    const filesToParse: { file: File; id: string }[] = [];
     
     Array.from(fileList).forEach(file => {
-      if (!file.name.endsWith('.csv')) return;
+      // Case-insensitive check for .csv extension
+      if (!file.name.toLowerCase().endsWith('.csv')) return;
       
       const fileId = crypto.randomUUID();
       newFiles.push({
@@ -508,16 +510,19 @@ const MoneySnapshot = () => {
         dateRange: { start: '', end: '' },
         status: 'parsing'
       });
-      
-      // Parse each file
-      setTimeout(() => parseCSVFile(file, fileId), 0);
+      filesToParse.push({ file, id: fileId });
     });
     
     if (newFiles.length > 0) {
       setFiles(prev => [...prev, ...newFiles]);
       setStep("managing");
+      
+      // Parse files after state update is scheduled
+      filesToParse.forEach(({ file, id }) => {
+        parseCSVFile(file, id);
+      });
     }
-  };
+  }, []);
 
   const removeFile = (id: string) => {
     setFiles(prev => {
@@ -544,7 +549,7 @@ const MoneySnapshot = () => {
     if (e.dataTransfer.files.length > 0) {
       addFiles(e.dataTransfer.files);
     }
-  }, []);
+  }, [addFiles]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -622,7 +627,7 @@ const MoneySnapshot = () => {
                   accept=".csv"
                   multiple
                   onChange={handleFileSelect}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
                 <Upload 
                   size={48} 
@@ -735,7 +740,7 @@ const MoneySnapshot = () => {
                       accept=".csv"
                       multiple
                       onChange={handleFileSelect}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
                     <div className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-border rounded-lg hover:border-lab-teal/50 hover:bg-secondary/30 transition-colors cursor-pointer">
                       <Plus size={16} className="text-muted-foreground" />
