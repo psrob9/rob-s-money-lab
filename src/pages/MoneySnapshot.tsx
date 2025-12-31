@@ -276,12 +276,7 @@ const MoneySnapshot = () => {
     }
   }, [analysis, categoryBreakdown, uncategorizedCount, transactions.length]);
 
-  // Fetch insights when results are displayed
-  useEffect(() => {
-    if (step === "results" && analysis && !insights && !insightsLoading && !insightsError) {
-      fetchInsights();
-    }
-  }, [step, analysis, insights, insightsLoading, insightsError, fetchInsights]);
+  // AI insights are now opt-in - user must click button to fetch
 
   const parseAmount = (value: string | number): number => {
     if (typeof value === "number") return value;
@@ -484,7 +479,7 @@ const MoneySnapshot = () => {
               See where your money actually goes in 60 seconds
             </p>
             <p className="text-lab-warm-gray">
-              Upload a bank statement CSV. Everything runs in your browser—your data never leaves your device.
+              Upload a bank statement CSV. Your transactions are analyzed in your browser. Only spending summaries are shared if you opt into AI insights.
             </p>
           </div>
 
@@ -765,7 +760,7 @@ const MoneySnapshot = () => {
                   {insightsLoading && (
                     <div className="py-8 text-center">
                       <Loader2 size={24} className="mx-auto mb-3 text-lab-teal animate-spin" />
-                      <p className="text-lab-warm-gray text-sm">Getting AI insights...</p>
+                      <p className="text-lab-warm-gray text-sm">Analyzing your patterns...</p>
                     </div>
                   )}
                   
@@ -797,9 +792,20 @@ const MoneySnapshot = () => {
                   )}
                   
                   {!insights && !insightsLoading && !insightsError && (
-                    <div className="py-8 text-center">
-                      <p className="text-lab-warm-gray text-sm">AI-powered insights</p>
-                      <p className="text-muted-foreground text-xs mt-1">Get personalized observations about your spending</p>
+                    <div className="py-4 space-y-4">
+                      <p className="text-lab-navy font-medium">
+                        Want AI-powered insights about your spending?
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        This will send a summary of your spending (totals and categories only) to Claude AI for analysis. Your individual transactions stay on your device.
+                      </p>
+                      <Button 
+                        onClick={fetchInsights}
+                        className="bg-lab-teal hover:bg-lab-teal/90 text-white"
+                      >
+                        <Sparkles size={14} className="mr-2" />
+                        Get AI Insights
+                      </Button>
                     </div>
                   )}
                 </CardContent>

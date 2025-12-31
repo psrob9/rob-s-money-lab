@@ -41,6 +41,31 @@ const About = () => {
               All tools run entirely in your browser. Your financial data never touches a server.
             </p>
           </div>
+
+          {/* How Your Data is Handled */}
+          <div className="mt-8 p-6 bg-secondary/50 rounded-xl border border-border">
+            <h2 className="text-lg font-semibold text-lab-navy mb-4">
+              How Your Data is Handled
+            </h2>
+            <ul className="space-y-3 text-sm text-lab-warm-gray">
+              <li className="flex items-start gap-2">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-lab-sage mt-1.5 flex-shrink-0"></span>
+                <span>Your CSV files are processed entirely in your browser</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-lab-sage mt-1.5 flex-shrink-0"></span>
+                <span>Individual transactions never leave your device</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-lab-sage mt-1.5 flex-shrink-0"></span>
+                <span>If you choose AI insights, only category totals and percentages are sent to Claude</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-lab-sage mt-1.5 flex-shrink-0"></span>
+                <span>No data is stored, sold, or used for any other purpose</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </section>
     </Layout>
