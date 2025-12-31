@@ -20,7 +20,6 @@ const Tools = () => {
               title="Money Snapshot"
               description="See where your money actually goes in 60 seconds. Upload a CSV, get instant clarity."
               href="/tools/money-snapshot"
-              badge="New"
             />
             
             {/* Placeholder cards for future tools */}
