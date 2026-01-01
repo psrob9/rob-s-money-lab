@@ -37,10 +37,13 @@ const Index = () => {
               badge="New"
             />
             
-            {/* Placeholder cards for future tools */}
-            <div className="hidden sm:block bg-card/50 rounded-xl border border-dashed border-border p-6 flex items-center justify-center min-h-[180px]">
-              <p className="text-muted-foreground text-sm text-center">More tools coming...</p>
-            </div>
+            <ToolCard
+              title="True Monthly Cost Calculator"
+              description="Find all your recurring costs and see what you really spend each month."
+              href="/tools/true-monthly-cost"
+            />
+            
+            {/* Placeholder card for future tools */}
             <div className="hidden lg:block bg-card/50 rounded-xl border border-dashed border-border p-6 flex items-center justify-center min-h-[180px]">
               <p className="text-muted-foreground text-sm text-center">More tools coming...</p>
             </div>
