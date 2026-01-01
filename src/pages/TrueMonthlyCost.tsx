@@ -388,7 +388,7 @@ const TrueMonthlyCost = () => {
           <div className="bg-lab-sage/5 border border-lab-sage/20 rounded-lg p-4 mb-8 text-center">
             <p className="text-sm text-lab-warm-gray">
               <span className="font-medium text-lab-sage">🔒 Your data stays private.</span>{" "}
-              All analysis happens in your browser. Nothing is uploaded or stored.
+              Your transactions are analyzed in your browser. Only spending summaries are shared if you opt into AI insights.
             </p>
           </div>
 
@@ -512,6 +512,10 @@ const TrueMonthlyCost = () => {
           {/* Results Section */}
           {hasAnalyzed && (
             <>
+              {/* Debug info */}
+              <p className="text-xs text-muted-foreground text-center mb-4">
+                Analyzing {totalTransactions.toLocaleString()} transactions • Found {recurringItems.length} recurring patterns • {filteredItems.length} shown after filters
+              </p>
               {/* Summary Card */}
               <Card className="mb-8 border-lab-teal/30 bg-gradient-to-br from-lab-teal/5 to-transparent">
                 <CardContent className="pt-8 pb-8">
@@ -610,7 +614,7 @@ const TrueMonthlyCost = () => {
               {showAiPrompt && !aiInsights && (
                 <Card className="mb-8 bg-gradient-to-br from-purple-50 to-transparent border-purple-200/50">
                   <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-4">
                       <div className="flex items-start gap-3">
                         <Sparkles className="text-purple-500 mt-0.5" size={20} />
                         <div>
@@ -620,18 +624,26 @@ const TrueMonthlyCost = () => {
                           </p>
                         </div>
                       </div>
-                      <Button 
-                        onClick={getAiInsights}
-                        disabled={isLoadingInsights}
-                        variant="outline"
-                        className="border-purple-300 hover:bg-purple-50"
-                      >
-                        {isLoadingInsights ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          "Get Insights"
-                        )}
-                      </Button>
+                      <div className="bg-purple-50 border border-purple-200/50 rounded-lg p-3">
+                        <p className="text-xs text-purple-700">
+                          <span className="font-medium">What's shared:</span> Only category totals and merchant names (e.g., "Netflix - $15.99/mo"). 
+                          Your individual transactions are never sent.
+                        </p>
+                      </div>
+                      <div className="flex justify-end">
+                        <Button 
+                          onClick={getAiInsights}
+                          disabled={isLoadingInsights}
+                          variant="outline"
+                          className="border-purple-300 hover:bg-purple-50"
+                        >
+                          {isLoadingInsights ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            "I understand, get insights"
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

@@ -33,7 +33,9 @@ export function cleanMerchantName(description: string): string {
   const prefixes = [
     'SQ *', 'TST*', 'SP ', 'GOOGLE *', 'APPLE.COM/BILL', 
     'AMZN ', 'AMAZON ', 'PAYPAL *', 'VENMO *', 'ZELLE ',
-    'ACH ', 'POS ', 'DEBIT ', 'CREDIT ', 'PURCHASE '
+    'ACH ', 'POS ', 'DEBIT ', 'CREDIT ', 'PURCHASE ',
+    'CHECKCARD ', 'RECURRING ', 'AUTOMATIC ', 'AUTOPAY ',
+    'BILL PAY ', 'ONLINE PMT ', 'ONLINE PAYMENT '
   ];
   for (const prefix of prefixes) {
     if (cleaned.startsWith(prefix)) {
@@ -50,7 +52,10 @@ export function cleanMerchantName(description: string): string {
     .replace(/\s+\d{4,5}$/g, '') // trailing 4-5 digit numbers (store numbers)
     .replace(/\s+(STORE|STR|STO)\s*#?\d*/gi, '') // STORE #123
     .replace(/\s+[A-Z]{2}\s*\d{5}(-\d{4})?$/g, '') // State + ZIP like "MD 20902"
-    .replace(/\s+[A-Z]{2}$/g, ''); // Trailing state abbreviation
+    .replace(/\s+[A-Z]{2}$/g, '') // Trailing state abbreviation
+    .replace(/\s+(INC|LLC|CORP|CO|LTD)\.?$/gi, '') // Company suffixes
+    .replace(/\s+(SERVICES?|SVCS?)$/gi, '') // Service suffixes
+    .replace(/\.COM$/gi, ''); // .COM suffix
   
   // Remove location info
   cleaned = cleaned
@@ -60,13 +65,23 @@ export function cleanMerchantName(description: string): string {
   // Collapse multiple spaces
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
   
-  // Take meaningful portion (first 3-4 words for long descriptions)
+  // Take meaningful portion (first 2-3 significant words for fuzzy matching)
   const words = cleaned.split(' ');
-  if (words.length > 4) {
-    cleaned = words.slice(0, 4).join(' ');
+  if (words.length > 3) {
+    cleaned = words.slice(0, 3).join(' ');
   }
   
   return cleaned;
+}
+
+// Extract core merchant identifier for fuzzy matching
+function extractMerchantCore(merchant: string): string {
+  // Get just the first 1-2 significant words for grouping similar merchants
+  const words = merchant.split(' ').filter(w => w.length > 2);
+  if (words.length === 0) return merchant;
+  // Return first word, or first two if first is very short
+  if (words[0].length >= 5) return words[0];
+  return words.slice(0, 2).join(' ');
 }
 
 // Calculate amount variance as a percentage
@@ -75,6 +90,13 @@ function calculateVariance(amounts: number[]): number {
   const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
   const maxDiff = Math.max(...amounts.map(a => Math.abs(a - avg)));
   return avg === 0 ? 0 : (maxDiff / avg) * 100;
+}
+
+// Get allowed variance based on amount (bigger bills can vary more)
+function getAllowedVariance(avgAmount: number): number {
+  if (avgAmount >= 500) return 25; // Mortgages, rent - escrow changes
+  if (avgAmount >= 100) return 20; // Utilities fluctuate
+  return 15; // Subscriptions are usually fixed
 }
 
 // Calculate intervals between transactions (in days)
@@ -164,8 +186,7 @@ function assignConfidence(
   occurrences: number,
   dateSpanDays: number,
   variance: number,
-  avgInterval: number,
-  intervalStdDev: number
+  avgAmount: number
 ): Confidence | null {
   // Not recurring: only 1 occurrence
   if (occurrences < 2) return null;
@@ -177,15 +198,14 @@ function assignConfidence(
   if (dateSpanDays < 45) return null;
   
   const dateSpanMonths = dateSpanDays / 30;
-  const intervalConsistencyRatio = avgInterval > 0 ? intervalStdDev / avgInterval : 1;
+  const allowedVariance = getAllowedVariance(avgAmount);
   
   // High confidence:
-  // 6+ occurrences AND spans 6+ months AND amount variance < 15% AND interval std dev < 30% of mean
+  // 6+ occurrences AND spans 6+ months AND amount variance < allowed (scaled by amount)
   if (
     occurrences >= 6 &&
     dateSpanMonths >= 6 &&
-    variance < 15 &&
-    intervalConsistencyRatio < 0.30
+    variance < allowedVariance
   ) {
     return 'high';
   }
@@ -216,7 +236,7 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
   // Only look at expenses
   const expenses = transactions.filter(t => t.amount < 0 || t.amount > 0);
   
-  // Group by cleaned merchant name
+  // First pass: group by cleaned merchant name
   const merchantGroups = new Map<string, Transaction[]>();
   
   for (const txn of expenses) {
@@ -233,11 +253,30 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
     merchantGroups.set(cleanedName, existing);
   }
   
+  // Second pass: merge similar merchants using fuzzy matching
+  const mergedGroups = new Map<string, { merchant: string; transactions: Transaction[] }>();
+  const merchantCores = new Map<string, string>(); // core -> canonical merchant name
+  
+  for (const [merchant, txns] of merchantGroups) {
+    const core = extractMerchantCore(merchant);
+    
+    if (merchantCores.has(core)) {
+      // Merge with existing group
+      const canonicalMerchant = merchantCores.get(core)!;
+      const existing = mergedGroups.get(canonicalMerchant)!;
+      existing.transactions.push(...txns);
+    } else {
+      // New group
+      merchantCores.set(core, merchant);
+      mergedGroups.set(merchant, { merchant, transactions: txns });
+    }
+  }
+  
   // Analyze each group
   const recurring: RecurringTransaction[] = [];
   let idCounter = 0;
   
-  for (const [merchant, txns] of merchantGroups) {
+  for (const [merchant, { transactions: txns }] of mergedGroups) {
     // Need at least 2 occurrences to be potentially recurring
     if (txns.length < 2) continue;
     
@@ -248,8 +287,7 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
     const maxDate = Math.max(...timestamps);
     const dateSpanDays = (maxDate - minDate) / (1000 * 60 * 60 * 24);
     
-    // Rule 1: Minimum time span - transactions must span at least 60 days
-    // (We use 45 days for the confidence check, but 60 days for initial filter)
+    // Rule 1: Minimum time span - transactions must span at least 45 days
     if (dateSpanDays < 45) continue;
     
     // Rule 2: No clustering - check for burst buying
@@ -267,16 +305,20 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
     const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
     const variance = calculateVariance(amounts);
     
-    // Skip if amounts are wildly inconsistent
-    if (variance > 50) continue;
+    // Get allowed variance based on amount size
+    const allowedVariance = getAllowedVariance(avgAmount);
+    
+    // Skip if amounts are wildly inconsistent (use scaled allowance)
+    if (variance > allowedVariance * 2) continue;
     
     // Assign confidence - returns null if not recurring
-    const confidence = assignConfidence(txns.length, dateSpanDays, variance, avgInterval, intervalStdDev);
+    const confidence = assignConfidence(txns.length, dateSpanDays, variance, avgAmount);
     if (!confidence) continue;
     
-    // Rule 3: If interval std dev > 50% of average, lower confidence significantly
-    // Already handled in assignConfidence, but we can skip very erratic patterns
-    if (avgInterval > 0 && intervalStdDev / avgInterval > 0.7) continue;
+    // Rule 3: If interval std dev > 50% of average, it's likely not truly recurring
+    // But allow some leeway for bigger bills (utilities, etc.)
+    const intervalConsistencyThreshold = avgAmount >= 100 ? 0.7 : 0.5;
+    if (avgInterval > 0 && intervalStdDev / avgInterval > intervalConsistencyThreshold) continue;
     
     const frequency = detectFrequency(avgInterval, txns.length, dateSpanDays);
     const monthlyEquivalent = calculateMonthlyEquivalent(avgAmount, frequency);
