@@ -40,7 +40,9 @@ export function FeedbackModal({ trigger, source }: FeedbackModalProps) {
       const formData = new FormData();
       formData.append("feedbackType", feedbackType);
       formData.append("message", message);
-      formData.append("email", email || "Not provided");
+      if (email.trim()) {
+        formData.append("email", email.trim());
+      }
       formData.append("source", source || "Unknown");
       formData.append("_subject", `[Rob's Money Lab] New ${feedbackType} feedback`);
 
