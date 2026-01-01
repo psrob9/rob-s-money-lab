@@ -37,18 +37,19 @@ export function FeedbackModal({ trigger, source }: FeedbackModalProps) {
     setStatus("submitting");
 
     try {
+      const formData = new FormData();
+      formData.append("feedbackType", feedbackType);
+      formData.append("message", message);
+      formData.append("email", email || "Not provided");
+      formData.append("source", source || "Unknown");
+      formData.append("_subject", `[Rob's Money Lab] New ${feedbackType} feedback`);
+
       const response = await fetch("https://formspree.io/f/mzdzdgga", {
         method: "POST",
+        body: formData,
         headers: {
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify({
-          feedbackType,
-          message: message.trim(),
-          email: email.trim() || "Not provided",
-          source: source || "Unknown",
-          timestamp: new Date().toISOString(),
-        }),
       });
 
       if (response.ok) {
@@ -61,9 +62,11 @@ export function FeedbackModal({ trigger, source }: FeedbackModalProps) {
           setEmail("");
         }, 2000);
       } else {
+        console.error("Formspree error:", await response.text());
         setStatus("error");
       }
-    } catch {
+    } catch (error) {
+      console.error("Submit error:", error);
       setStatus("error");
     }
   };
