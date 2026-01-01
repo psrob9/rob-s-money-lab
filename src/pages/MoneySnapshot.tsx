@@ -874,12 +874,59 @@ const MoneySnapshot = () => {
                 </p>
               </button>
 
-              {/* Privacy Note */}
-              <div className="flex items-start gap-3 p-4 bg-lab-teal/5 rounded-lg border border-lab-teal/20">
-                <Lock size={20} className="text-lab-teal mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-lab-warm-gray">
-                  <span className="font-medium text-lab-navy">Privacy first:</span> Your files are processed entirely in your browser. Nothing is uploaded to any server.
-                </p>
+              {/* Privacy Note with Expandable Details */}
+              <div className="bg-lab-teal/5 rounded-lg border border-lab-teal/20">
+                <Collapsible>
+                  <div className="flex items-start gap-3 p-4">
+                    <Lock size={20} className="text-lab-teal mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <Link 
+                          to="/about#privacy" 
+                          className="font-medium text-lab-navy hover:text-lab-teal transition-colors"
+                        >
+                          Privacy first
+                        </Link>
+                        <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-lab-teal transition-colors">
+                          <span>Details</span>
+                          <ChevronDown size={14} className="transition-transform [[data-state=open]_&]:rotate-180" />
+                        </CollapsibleTrigger>
+                      </div>
+                      <p className="text-sm text-lab-warm-gray mt-1">
+                        Your files are processed entirely in your browser. Nothing is uploaded to any server.
+                      </p>
+                    </div>
+                  </div>
+                  <CollapsibleContent>
+                    <div className="px-4 pb-4 pt-0 ml-8">
+                      <div className="p-3 bg-background/50 rounded-lg border border-border/50">
+                        <p className="text-xs font-medium text-lab-navy mb-2">How Your Data is Handled</p>
+                        <ul className="text-xs text-lab-warm-gray space-y-1.5">
+                          <li className="flex items-start gap-2">
+                            <span className="text-lab-teal">•</span>
+                            <span>Your CSV files are processed entirely in your browser — transactions never touch a server</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-lab-teal">•</span>
+                            <span>Individual transaction details never leave your device — not the descriptions, not the amounts, nothing</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-lab-teal">•</span>
+                            <span>AI insights are opt-in — if you choose to use them, only category totals and percentages are sent to Claude (Anthropic's AI), never your actual transactions</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-lab-teal">•</span>
+                            <span>No accounts, no tracking, no data storage — when you close the tab, it's gone</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-lab-teal">•</span>
+                            <span>Category preferences are saved locally — if you teach the tool a new category, that's stored in your browser only</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
 
               {/* Bank Export Instructions */}

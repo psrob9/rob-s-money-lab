@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker, Info, ArrowRight, Download, Lightbulb } from "lucide-react";
+import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker, Info, ArrowRight, Download, Lightbulb, Lock } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -499,12 +499,59 @@ const TrueMonthlyCost = () => {
             </p>
           </div>
 
-          {/* Privacy Note */}
-          <div className="bg-lab-sage/5 border border-lab-sage/20 rounded-lg p-4 mb-8 text-center">
-            <p className="text-sm text-lab-warm-gray">
-              <span className="font-medium text-lab-sage">🔒 Your data stays private.</span>{" "}
-              Your transactions are analyzed in your browser. Only spending summaries are shared if you opt into AI insights.
-            </p>
+          {/* Privacy Note with Expandable Details */}
+          <div className="bg-lab-sage/5 rounded-lg border border-lab-sage/20 mb-8">
+            <Collapsible>
+              <div className="flex items-start gap-3 p-4">
+                <Lock size={20} className="text-lab-sage mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link 
+                      to="/about#privacy" 
+                      className="font-medium text-lab-navy hover:text-lab-sage transition-colors"
+                    >
+                      Privacy first
+                    </Link>
+                    <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-lab-sage transition-colors">
+                      <span>Details</span>
+                      <ChevronDown size={14} className="transition-transform [[data-state=open]_&]:rotate-180" />
+                    </CollapsibleTrigger>
+                  </div>
+                  <p className="text-sm text-lab-warm-gray mt-1">
+                    Your transactions are analyzed in your browser. Only spending summaries are shared if you opt into AI insights.
+                  </p>
+                </div>
+              </div>
+              <CollapsibleContent>
+                <div className="px-4 pb-4 pt-0 ml-8">
+                  <div className="p-3 bg-background/50 rounded-lg border border-border/50">
+                    <p className="text-xs font-medium text-lab-navy mb-2">How Your Data is Handled</p>
+                    <ul className="text-xs text-lab-warm-gray space-y-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="text-lab-sage">•</span>
+                        <span>Your CSV files are processed entirely in your browser — transactions never touch a server</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-lab-sage">•</span>
+                        <span>Individual transaction details never leave your device — not the descriptions, not the amounts, nothing</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-lab-sage">•</span>
+                        <span>AI insights are opt-in — if you choose to use them, only category totals and percentages are sent to Claude (Anthropic's AI), never your actual transactions</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-lab-sage">•</span>
+                        <span>No accounts, no tracking, no data storage — when you close the tab, it's gone</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-lab-sage">•</span>
+                        <span>Category preferences are saved locally — if you teach the tool a new category, that's stored in your browser only</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
 
           {/* Shared Data Banner */}
