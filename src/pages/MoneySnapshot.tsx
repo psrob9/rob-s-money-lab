@@ -221,7 +221,7 @@ const categorizeTransaction = (description: string, amount: number): { category:
     }
   }
   
-  return { category: "Uncategorized", color: "bg-neutral-400" };
+  return { category: "Needs Review", color: "bg-amber-400" };
 };
 
 const calculateCategoryBreakdown = (txns: Transaction[]): CategoryBreakdown[] => {
@@ -345,7 +345,7 @@ const MoneySnapshot = () => {
       .filter(txn => {
         if (txn.amount >= 0) return false; // Skip income
         const { category } = categorizeTransaction(txn.description, txn.amount);
-        return category === "Uncategorized";
+        return category === "Needs Review";
       })
       .slice(0, 20);
   }, [allTransactions, learnedCategories]);
@@ -355,7 +355,7 @@ const MoneySnapshot = () => {
     return allTransactions.filter(txn => {
       if (txn.amount >= 0) return false;
       const { category } = categorizeTransaction(txn.description, txn.amount);
-      return category === "Uncategorized";
+      return category === "Needs Review";
     }).length;
   }, [allTransactions, learnedCategories]);
 
@@ -747,6 +747,38 @@ const MoneySnapshot = () => {
     }).format(amount);
   };
 
+  // Download results as CSV
+  const handleDownloadResults = useCallback(() => {
+    if (allTransactions.length === 0) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const filename = `money-snapshot-${today}.csv`;
+    
+    // Build CSV content
+    const headers = ['Date', 'Description', 'Amount', 'Category'];
+    const rows = allTransactions.map(txn => {
+      const { category } = categorizeTransaction(txn.description, txn.amount);
+      return [
+        txn.date,
+        `"${txn.description.replace(/"/g, '""')}"`,
+        txn.amount.toFixed(2),
+        category
+      ].join(',');
+    });
+    
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    toast.success('Results downloaded!');
+  }, [allTransactions]);
+
   const isParsing = files.some(f => f.status === 'parsing');
 
   return (
@@ -849,6 +881,26 @@ const MoneySnapshot = () => {
                   <span className="font-medium text-lab-navy">Privacy first:</span> Your files are processed entirely in your browser. Nothing is uploaded to any server.
                 </p>
               </div>
+
+              {/* Bank Export Instructions */}
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm text-lab-teal hover:underline">
+                  <ChevronDown size={16} className="transition-transform [[data-state=open]_&]:rotate-180" />
+                  How do I get a CSV from my bank?
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 p-4 bg-secondary/50 rounded-lg">
+                  <p className="text-sm text-lab-warm-gray mb-3">
+                    Most banks let you export transactions as CSV from their website:
+                  </p>
+                  <ul className="text-sm text-lab-warm-gray space-y-2">
+                    <li><span className="font-medium text-lab-navy">Chase:</span> Accounts → Download account activity → CSV</li>
+                    <li><span className="font-medium text-lab-navy">Bank of America:</span> Statements & Documents → Download → Spreadsheet (CSV)</li>
+                    <li><span className="font-medium text-lab-navy">Capital One:</span> Account → Download Transactions → CSV</li>
+                    <li><span className="font-medium text-lab-navy">Wells Fargo:</span> Account → Download → Comma Delimited</li>
+                    <li><span className="font-medium text-lab-navy">Other banks:</span> Look for 'Export', 'Download', or 'Statements' in your online banking</li>
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Format Help */}
               <Collapsible open={formatHelpOpen} onOpenChange={setFormatHelpOpen}>
@@ -1098,8 +1150,8 @@ const MoneySnapshot = () => {
                         const maxPercentage = categoryBreakdown[0]?.percentage || 100;
                         const barWidth = (cat.percentage / maxPercentage) * 100;
                         
-                        // Make Uncategorized expandable for debugging
-                        if (cat.name === "Uncategorized" && uncategorizedTransactions.length > 0) {
+                        // Make Needs Review expandable for debugging
+                        if (cat.name === "Needs Review" && uncategorizedTransactions.length > 0) {
                           return (
                             <Collapsible 
                               key={cat.name} 
@@ -1107,15 +1159,20 @@ const MoneySnapshot = () => {
                               onOpenChange={setUncategorizedOpen}
                             >
                               <CollapsibleTrigger className="w-full text-left">
-                                <div className="space-y-1 p-1 -m-1 rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer">
+                                <div className="space-y-1 p-1 -m-1 rounded-lg hover:bg-lab-amber/10 transition-colors cursor-pointer">
                                   <div className="flex items-center justify-between text-sm">
-                                    <span className="font-medium text-lab-navy flex items-center gap-1">
-                                      <ChevronRight 
-                                        size={14} 
-                                        className={`text-muted-foreground transition-transform ${uncategorizedOpen ? 'rotate-90' : ''}`} 
-                                      />
-                                      {cat.name}
-                                    </span>
+                                    <div>
+                                      <span className="font-medium text-lab-amber flex items-center gap-1">
+                                        <ChevronRight 
+                                          size={14} 
+                                          className={`transition-transform ${uncategorizedOpen ? 'rotate-90' : ''}`} 
+                                        />
+                                        {cat.name}
+                                      </span>
+                                      {!uncategorizedOpen && (
+                                        <p className="text-xs text-muted-foreground ml-5 mt-0.5">Click to help categorize these</p>
+                                      )}
+                                    </div>
                           <div className="flex flex-col items-end">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-lab-navy">{formatCurrency(cat.total)}</span>
@@ -1139,7 +1196,10 @@ const MoneySnapshot = () => {
                                 </div>
                               </CollapsibleTrigger>
                               <CollapsibleContent>
-                                <div className="mt-2 ml-4 p-3 bg-secondary/30 rounded-lg border border-border/50">
+                                <div className="mt-2 ml-4 p-3 bg-lab-amber/5 rounded-lg border border-lab-amber/20">
+                                  <p className="text-xs text-lab-amber font-medium mb-3">
+                                    These transactions need your help to categorize. Click any to teach me!
+                                  </p>
                                   <ScrollArea className="max-h-[200px]">
                                     <div className="space-y-0">
                                       {uncategorizedTransactions.map((txn, idx) => (
@@ -1149,9 +1209,9 @@ const MoneySnapshot = () => {
                                             e.stopPropagation();
                                             setTeachingTransaction(txn);
                                           }}
-                                          className="flex items-center justify-between w-full text-sm text-muted-foreground py-2.5 px-2 -mx-2 border-b border-border/30 last:border-0 cursor-pointer hover:bg-lab-teal/10 rounded-md transition-colors group text-left"
+                                          className="flex items-center justify-between w-full text-sm text-muted-foreground py-2.5 px-2 -mx-2 border-b border-border/30 last:border-0 cursor-pointer hover:bg-lab-amber/10 rounded-md transition-colors group text-left"
                                         >
-                                          <span className="truncate max-w-[200px] sm:max-w-[280px] group-hover:text-lab-teal" title="Click to categorize">
+                                          <span className="truncate max-w-[200px] sm:max-w-[280px] group-hover:text-lab-amber" title="Click to categorize">
                                             {txn.description.length > 50 
                                               ? txn.description.substring(0, 50) + "..." 
                                               : txn.description}
@@ -1163,9 +1223,6 @@ const MoneySnapshot = () => {
                                       ))}
                                     </div>
                                   </ScrollArea>
-                                  <p className="text-xs text-muted-foreground italic mt-3 pt-2 border-t border-border/30">
-                                    Click any transaction to teach me how to categorize it
-                                  </p>
                                 </div>
                               </CollapsibleContent>
                             </Collapsible>
@@ -1313,6 +1370,7 @@ const MoneySnapshot = () => {
                 transactionCount={totalTransactionCount}
                 topCategories={categoryBreakdown.slice(0, 3).map(c => c.name)}
                 onReset={handleReset}
+                onDownload={handleDownloadResults}
               />
             </div>
           )}
