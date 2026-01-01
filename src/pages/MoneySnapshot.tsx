@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings } from "lucide-react";
+import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -18,6 +18,7 @@ import {
   extractPattern,
   type LearnedCategory 
 } from "@/utils/categoryLearning";
+import { HeadlineInsightCard, QuickStatsBar, QuickWinsCard, SummaryCard } from "@/components/money-snapshot";
 
 interface Transaction {
   date: string;
@@ -738,6 +739,27 @@ const MoneySnapshot = () => {
           {/* Step 1: Upload */}
           {step === "upload" && (
             <div className="space-y-6">
+              {/* Value proposition */}
+              <div className="space-y-3 mb-2">
+                <p className="text-sm text-lab-warm-gray text-center">
+                  Upload your bank statement and discover:
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-6 text-sm">
+                  <div className="flex items-center gap-2 justify-center">
+                    <CheckCircle2 size={16} className="text-lab-sage" />
+                    <span className="text-lab-navy">Your top spending categories</span>
+                  </div>
+                  <div className="flex items-center gap-2 justify-center">
+                    <CheckCircle2 size={16} className="text-lab-sage" />
+                    <span className="text-lab-navy">Hidden patterns in your habits</span>
+                  </div>
+                  <div className="flex items-center gap-2 justify-center">
+                    <CheckCircle2 size={16} className="text-lab-sage" />
+                    <span className="text-lab-navy">Quick wins to optimize</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Upload Zone */}
               <div
                 onDrop={handleDrop}
@@ -923,36 +945,26 @@ const MoneySnapshot = () => {
           {/* Step 3: Results */}
           {step === "results" && analysis && (
             <div className="space-y-6">
-              {/* File indicator */}
-              <Collapsible open={filesExpanded} onOpenChange={setFilesExpanded}>
-                <CollapsibleTrigger className="w-full">
-                  <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors">
-                    <div className="flex items-center gap-2 text-sm">
-                      <FileText size={16} className="text-lab-teal" />
-                      <span className="text-lab-navy font-medium">
-                        {readyFiles.length} {readyFiles.length === 1 ? 'file' : 'files'}
-                      </span>
-                      <span className="text-muted-foreground">• {totalTransactionCount} transactions</span>
-                    </div>
-                    <ChevronDown 
-                      size={16} 
-                      className={`text-muted-foreground transition-transform ${filesExpanded ? 'rotate-180' : ''}`} 
-                    />
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="mt-2 p-3 bg-secondary/30 rounded-lg space-y-2">
-                    {readyFiles.map(file => (
-                      <div key={file.id} className="flex items-center justify-between text-sm">
-                        <span className="text-lab-navy truncate">{file.name}</span>
-                        <span className="text-muted-foreground text-xs">{file.transactions.length} transactions</span>
-                      </div>
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+              {/* 1. Headline Insight Card - ABOVE THE FOLD */}
+              <HeadlineInsightCard
+                totalIn={analysis.totalIn}
+                totalOut={analysis.totalOut}
+                net={analysis.net}
+                monthsSpan={analysis.monthsSpan}
+                categoryBreakdown={categoryBreakdown}
+                uncategorizedPercentage={
+                  categoryBreakdown.find(c => c.name === "Uncategorized")?.percentage || 0
+                }
+              />
 
-              {/* The Big Picture */}
+              {/* 2. Quick Stats Bar */}
+              <QuickStatsBar
+                monthsSpan={analysis.monthsSpan}
+                transactionCount={totalTransactionCount}
+                fileCount={readyFiles.length}
+              />
+
+              {/* 3. The Big Picture */}
               <Card className="border-border shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg text-lab-navy flex items-center gap-2">
@@ -1006,7 +1018,7 @@ const MoneySnapshot = () => {
                 </CardContent>
               </Card>
 
-              {/* Where It Goes */}
+              {/* 4. Where It Goes */}
               <Card className="border-border shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg text-lab-navy">Where It Goes</CardTitle>
@@ -1140,7 +1152,14 @@ const MoneySnapshot = () => {
                 </CardContent>
               </Card>
 
-              {/* Patterns */}
+              {/* 5. Quick Wins */}
+              <QuickWinsCard
+                categoryBreakdown={categoryBreakdown}
+                monthsSpan={analysis.monthsSpan}
+                totalOut={analysis.totalOut}
+              />
+
+              {/* 6. Patterns (AI Insights) */}
               <Card className="border-border shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg text-lab-navy flex items-center gap-2">
@@ -1203,24 +1222,16 @@ const MoneySnapshot = () => {
                 </CardContent>
               </Card>
 
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  disabled
-                >
-                  <Download size={16} className="mr-2" />
-                  Download summary
-                </Button>
-                <Button 
-                  onClick={handleReset}
-                  className="flex-1 bg-lab-teal hover:bg-lab-teal/90 text-white"
-                >
-                  <RefreshCw size={16} className="mr-2" />
-                  Start over
-                </Button>
-              </div>
+              {/* 7. Summary + Next Steps */}
+              <SummaryCard
+                totalIn={analysis.totalIn}
+                totalOut={analysis.totalOut}
+                net={analysis.net}
+                monthsSpan={analysis.monthsSpan}
+                transactionCount={totalTransactionCount}
+                topCategories={categoryBreakdown.slice(0, 3).map(c => c.name)}
+                onReset={handleReset}
+              />
             </div>
           )}
         </div>
