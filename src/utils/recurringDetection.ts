@@ -25,6 +25,43 @@ export interface RecurringTransaction {
   intervalStdDev: number;
 }
 
+// Debug info returned alongside recurring detection results
+export interface DetectionDebug {
+  totalTransactionsAnalyzed: number;
+  expensesOnly: number;
+  uniqueMerchantsAfterCleaning: number;
+  uniqueMerchantsAfterMerging: number;
+  potentiallyRecurring: number;
+  passedConfidenceThreshold: number;
+  filteredReasons: {
+    tooFewOccurrences: number;
+    tooShortSpan: number;
+    clusteredBuying: number;
+    highVariance: number;
+    inconsistentIntervals: number;
+    lowMonthlyContribution: number;
+    noConfidence: number;
+  };
+}
+
+// Known brand names for better fuzzy matching
+const KNOWN_BRANDS = [
+  'PENNYMAC', 'WELLS FARGO', 'CHASE', 'BANK OF AMERICA', 'CITI', 'US BANK',
+  'COMCAST', 'XFINITY', 'VERIZON', 'AT&T', 'ATT', 'T-MOBILE', 'SPECTRUM',
+  'NETFLIX', 'SPOTIFY', 'HULU', 'DISNEY', 'AMAZON', 'APPLE',
+  'GEICO', 'PROGRESSIVE', 'STATE FARM', 'ALLSTATE', 'USAA',
+  'DUKE ENERGY', 'PG&E', 'EDISON', 'NATIONAL GRID', 'DOMINION',
+  'MR COOPER', 'NATIONSTAR', 'LOANCARE', 'NEWREZ', 'ROCKET MORTGAGE',
+  'QUICKEN LOANS', 'LOANDEPOT', 'CALIBER HOME', 'GUILD MORTGAGE'
+];
+
+// Suffixes to strip for better grouping
+const STRIP_SUFFIXES = [
+  'LOAN', 'LOANS', 'MTG', 'MORTGAGE', 'PYMT', 'PAYMENT', 'PAYMENTS',
+  'SERVICES', 'SVCS', 'SERVICE', 'SVC', 'INC', 'LLC', 'CORP', 'CO', 'LTD',
+  'BILLING', 'BILL', 'PAY', 'AUTOPAY', 'AUTO', 'ONLINE', 'WEB'
+];
+
 // Clean and normalize merchant names for grouping
 export function cleanMerchantName(description: string): string {
   let cleaned = description.toUpperCase().trim();
@@ -53,14 +90,18 @@ export function cleanMerchantName(description: string): string {
     .replace(/\s+(STORE|STR|STO)\s*#?\d*/gi, '') // STORE #123
     .replace(/\s+[A-Z]{2}\s*\d{5}(-\d{4})?$/g, '') // State + ZIP like "MD 20902"
     .replace(/\s+[A-Z]{2}$/g, '') // Trailing state abbreviation
-    .replace(/\s+(INC|LLC|CORP|CO|LTD)\.?$/gi, '') // Company suffixes
-    .replace(/\s+(SERVICES?|SVCS?)$/gi, '') // Service suffixes
     .replace(/\.COM$/gi, ''); // .COM suffix
   
   // Remove location info
   cleaned = cleaned
     .replace(/\s+(USA|US|CA|UK|GB)$/g, '')
     .replace(/\s+\d+\s+\w+\s+(ST|AVE|BLVD|RD|DR|LN|WAY|CT)\.?/gi, '');
+  
+  // Strip common suffixes for better grouping
+  for (const suffix of STRIP_SUFFIXES) {
+    const suffixPattern = new RegExp(`\\s+${suffix}$`, 'i');
+    cleaned = cleaned.replace(suffixPattern, '');
+  }
   
   // Collapse multiple spaces
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
@@ -76,9 +117,20 @@ export function cleanMerchantName(description: string): string {
 
 // Extract core merchant identifier for fuzzy matching
 function extractMerchantCore(merchant: string): string {
+  const upperMerchant = merchant.toUpperCase();
+  
+  // Check for known brand names first
+  for (const brand of KNOWN_BRANDS) {
+    if (upperMerchant.includes(brand) || upperMerchant.startsWith(brand.split(' ')[0])) {
+      // Return just the first word of the brand for grouping
+      return brand.split(' ')[0];
+    }
+  }
+  
   // Get just the first 1-2 significant words for grouping similar merchants
   const words = merchant.split(' ').filter(w => w.length > 2);
   if (words.length === 0) return merchant;
+  
   // Return first word, or first two if first is very short
   if (words[0].length >= 5) return words[0];
   return words.slice(0, 2).join(' ');
@@ -94,8 +146,8 @@ function calculateVariance(amounts: number[]): number {
 
 // Get allowed variance based on amount (bigger bills can vary more)
 function getAllowedVariance(avgAmount: number): number {
-  if (avgAmount >= 500) return 25; // Mortgages, rent - escrow changes
-  if (avgAmount >= 100) return 20; // Utilities fluctuate
+  if (avgAmount >= 500) return 30; // Mortgages, rent - escrow changes (increased from 25)
+  if (avgAmount >= 100) return 25; // Utilities fluctuate (increased from 20)
   return 15; // Subscriptions are usually fixed
 }
 
@@ -211,11 +263,11 @@ function assignConfidence(
   }
   
   // Medium confidence:
-  // 3-5 occurrences AND spans 3+ months AND amount variance < 30%
+  // 3-5 occurrences AND spans 3+ months AND amount variance < 35%
   if (
     occurrences >= 3 &&
     dateSpanMonths >= 3 &&
-    variance < 30
+    variance < 35
   ) {
     return 'medium';
   }
@@ -229,18 +281,52 @@ function assignConfidence(
   return null;
 }
 
-// Main function to find recurring transactions
+// Main function to find recurring transactions (backward compatible)
 export function findRecurringTransactions(transactions: Transaction[]): RecurringTransaction[] {
-  if (transactions.length === 0) return [];
+  return findRecurringTransactionsWithDebug(transactions).items;
+}
+
+// Main function with debug info
+export function findRecurringTransactionsWithDebug(transactions: Transaction[]): {
+  items: RecurringTransaction[];
+  debug: DetectionDebug;
+} {
+  const debug: DetectionDebug = {
+    totalTransactionsAnalyzed: transactions.length,
+    expensesOnly: 0,
+    uniqueMerchantsAfterCleaning: 0,
+    uniqueMerchantsAfterMerging: 0,
+    potentiallyRecurring: 0,
+    passedConfidenceThreshold: 0,
+    filteredReasons: {
+      tooFewOccurrences: 0,
+      tooShortSpan: 0,
+      clusteredBuying: 0,
+      highVariance: 0,
+      inconsistentIntervals: 0,
+      lowMonthlyContribution: 0,
+      noConfidence: 0
+    }
+  };
   
-  // Only look at expenses
-  const expenses = transactions.filter(t => t.amount < 0 || t.amount > 0);
+  if (transactions.length === 0) return { items: [], debug };
+  
+  // Only look at expenses (filter out income)
+  const expenses = transactions.filter(t => {
+    // Skip income/deposits
+    if (t.amount > 0 && t.description.toUpperCase().match(/(PAYROLL|SALARY|DEPOSIT|DIRECT DEP|TRANSFER FROM)/)) {
+      return false;
+    }
+    return true;
+  });
+  
+  debug.expensesOnly = expenses.length;
   
   // First pass: group by cleaned merchant name
   const merchantGroups = new Map<string, Transaction[]>();
   
   for (const txn of expenses) {
-    // Skip income/deposits
+    // Skip positive amounts that look like income
     if (txn.amount > 0 && txn.description.toUpperCase().match(/(PAYROLL|SALARY|DEPOSIT|DIRECT DEP|TRANSFER FROM)/)) {
       continue;
     }
@@ -252,6 +338,8 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
     existing.push(txn);
     merchantGroups.set(cleanedName, existing);
   }
+  
+  debug.uniqueMerchantsAfterCleaning = merchantGroups.size;
   
   // Second pass: merge similar merchants using fuzzy matching
   const mergedGroups = new Map<string, { merchant: string; transactions: Transaction[] }>();
@@ -272,13 +360,18 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
     }
   }
   
+  debug.uniqueMerchantsAfterMerging = mergedGroups.size;
+  
   // Analyze each group
   const recurring: RecurringTransaction[] = [];
   let idCounter = 0;
   
   for (const [merchant, { transactions: txns }] of mergedGroups) {
     // Need at least 2 occurrences to be potentially recurring
-    if (txns.length < 2) continue;
+    if (txns.length < 2) {
+      debug.filteredReasons.tooFewOccurrences++;
+      continue;
+    }
     
     // Calculate date span
     const dates = txns.map(t => t.date);
@@ -288,10 +381,18 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
     const dateSpanDays = (maxDate - minDate) / (1000 * 60 * 60 * 24);
     
     // Rule 1: Minimum time span - transactions must span at least 45 days
-    if (dateSpanDays < 45) continue;
+    if (dateSpanDays < 45) {
+      debug.filteredReasons.tooShortSpan++;
+      continue;
+    }
     
     // Rule 2: No clustering - check for burst buying
-    if (isClusteredBuying(dates)) continue;
+    if (isClusteredBuying(dates)) {
+      debug.filteredReasons.clusteredBuying++;
+      continue;
+    }
+    
+    debug.potentiallyRecurring++;
     
     // Calculate intervals
     const intervals = calculateIntervals(dates);
@@ -308,23 +409,40 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
     // Get allowed variance based on amount size
     const allowedVariance = getAllowedVariance(avgAmount);
     
-    // Skip if amounts are wildly inconsistent (use scaled allowance)
-    if (variance > allowedVariance * 2) continue;
+    // For large bills (mortgages, insurance), allow up to 50% variance for escrow
+    const maxVariance = avgAmount >= 500 ? 50 : allowedVariance * 2;
+    
+    // Skip if amounts are wildly inconsistent
+    if (variance > maxVariance) {
+      debug.filteredReasons.highVariance++;
+      continue;
+    }
     
     // Assign confidence - returns null if not recurring
     const confidence = assignConfidence(txns.length, dateSpanDays, variance, avgAmount);
-    if (!confidence) continue;
+    if (!confidence) {
+      debug.filteredReasons.noConfidence++;
+      continue;
+    }
     
-    // Rule 3: If interval std dev > 50% of average, it's likely not truly recurring
-    // But allow some leeway for bigger bills (utilities, etc.)
-    const intervalConsistencyThreshold = avgAmount >= 100 ? 0.7 : 0.5;
-    if (avgInterval > 0 && intervalStdDev / avgInterval > intervalConsistencyThreshold) continue;
+    // Rule 3: If interval std dev > threshold of average, it's likely not truly recurring
+    // But allow more leeway for bigger bills (mortgages can have timing variations)
+    const intervalConsistencyThreshold = avgAmount >= 500 ? 0.85 : (avgAmount >= 100 ? 0.7 : 0.5);
+    if (avgInterval > 0 && intervalStdDev / avgInterval > intervalConsistencyThreshold) {
+      debug.filteredReasons.inconsistentIntervals++;
+      continue;
+    }
     
     const frequency = detectFrequency(avgInterval, txns.length, dateSpanDays);
     const monthlyEquivalent = calculateMonthlyEquivalent(avgAmount, frequency);
     
     // Only include items with meaningful monthly contribution
-    if (monthlyEquivalent < 1 && frequency !== 'one-time') continue;
+    if (monthlyEquivalent < 1 && frequency !== 'one-time') {
+      debug.filteredReasons.lowMonthlyContribution++;
+      continue;
+    }
+    
+    debug.passedConfidenceThreshold++;
     
     recurring.push({
       id: `recurring-${++idCounter}`,
@@ -343,7 +461,10 @@ export function findRecurringTransactions(transactions: Transaction[]): Recurrin
   }
   
   // Sort by monthly equivalent (highest first)
-  return recurring.sort((a, b) => b.monthlyEquivalent - a.monthlyEquivalent);
+  return {
+    items: recurring.sort((a, b) => b.monthlyEquivalent - a.monthlyEquivalent),
+    debug
+  };
 }
 
 // Recalculate monthly equivalent when user changes frequency

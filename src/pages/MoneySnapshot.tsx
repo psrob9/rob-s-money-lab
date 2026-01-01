@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTransactionContext } from "@/contexts/TransactionContext";
 import { Layout } from "@/components/Layout";
 import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings, CheckCircle2, Beaker } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -272,6 +273,7 @@ const calculateCategoryBreakdown = (txns: Transaction[]): CategoryBreakdown[] =>
 type ToolStep = "upload" | "managing" | "results";
 
 const MoneySnapshot = () => {
+  const { setSharedData } = useTransactionContext();
   const [step, setStep] = useState<ToolStep>("upload");
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);

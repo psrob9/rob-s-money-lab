@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -9,21 +9,24 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker } from "lucide-react";
+import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker, Info, ArrowRight } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  findRecurringTransactions,
+  findRecurringTransactionsWithDebug,
   recalculateMonthlyEquivalent,
   calculateRecurringSummary,
   RecurringTransaction,
   RecurringSummary,
   Transaction,
   Frequency,
-  Confidence
+  Confidence,
+  DetectionDebug
 } from "@/utils/recurringDetection";
 import { SAMPLE_PERSONA, getSampleTransactionsForRecurring } from "@/utils/sampleData";
+import { useTransactionContext } from "@/contexts/TransactionContext";
 
 interface UploadedFile {
   file: File;
@@ -44,6 +47,7 @@ const CONFIDENCE_OPTIONS: { value: string; label: string }[] = [
 
 const TrueMonthlyCost = () => {
   const { toast } = useToast();
+  const { sharedTransactions, sharedFiles, hasSharedData, clearSharedData } = useTransactionContext();
   
   // File upload state
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -53,6 +57,11 @@ const TrueMonthlyCost = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recurringItems, setRecurringItems] = useState<RecurringTransaction[]>([]);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [detectionDebug, setDetectionDebug] = useState<DetectionDebug | null>(null);
+  const [debugOpen, setDebugOpen] = useState(false);
+  
+  // Shared data banner state
+  const [showSharedDataBanner, setShowSharedDataBanner] = useState(false);
   
   // Filter state
   const [selectedFrequencies, setSelectedFrequencies] = useState<Set<Frequency>>(new Set(FREQUENCY_OPTIONS));
@@ -70,6 +79,13 @@ const TrueMonthlyCost = () => {
   
   // Expanded rows state
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  
+  // Check for shared data on mount
+  useEffect(() => {
+    if (hasSharedData && !hasAnalyzed && uploadedFiles.length === 0) {
+      setShowSharedDataBanner(true);
+    }
+  }, [hasSharedData, hasAnalyzed, uploadedFiles.length]);
 
   // Filter and sort items
   const filteredItems = useMemo(() => {
@@ -222,11 +238,13 @@ const TrueMonthlyCost = () => {
       .filter(f => f.status === 'ready')
       .flatMap(f => f.transactions);
     
-    const recurring = findRecurringTransactions(allTransactions);
+    const { items: recurring, debug } = findRecurringTransactionsWithDebug(allTransactions);
     
     setRecurringItems(recurring);
+    setDetectionDebug(debug);
     setHasAnalyzed(true);
     setShowAiPrompt(true);
+    setShowSharedDataBanner(false);
     setIsAnalyzing(false);
     
     toast({
@@ -234,6 +252,22 @@ const TrueMonthlyCost = () => {
       description: `Found ${recurring.length} recurring expenses.`
     });
   }, [uploadedFiles, toast]);
+  
+  // Use shared transactions from Money Snapshot
+  const useSharedTransactions = useCallback(() => {
+    const { items: recurring, debug } = findRecurringTransactionsWithDebug(sharedTransactions);
+    
+    setRecurringItems(recurring);
+    setDetectionDebug(debug);
+    setHasAnalyzed(true);
+    setShowAiPrompt(true);
+    setShowSharedDataBanner(false);
+    
+    toast({
+      title: "Using transactions from Money Snapshot",
+      description: `Analyzing ${sharedTransactions.length} transactions.`
+    });
+  }, [sharedTransactions, toast]);
 
   const updateFrequency = useCallback((id: string, frequency: Frequency) => {
     setRecurringItems(prev => prev.map(item => {
@@ -358,8 +392,9 @@ const TrueMonthlyCost = () => {
     setIsSampleData(true);
     
     // Run analysis immediately
-    const recurring = findRecurringTransactions(sampleTxns);
+    const { items: recurring, debug } = findRecurringTransactionsWithDebug(sampleTxns);
     setRecurringItems(recurring);
+    setDetectionDebug(debug);
     setHasAnalyzed(true);
     setShowAiPrompt(true);
     
@@ -372,6 +407,7 @@ const TrueMonthlyCost = () => {
   const handleReset = useCallback(() => {
     setUploadedFiles([]);
     setRecurringItems([]);
+    setDetectionDebug(null);
     setHasAnalyzed(false);
     setShowAiPrompt(false);
     setAiInsights(null);
@@ -381,7 +417,8 @@ const TrueMonthlyCost = () => {
     setSortBy('monthly-desc');
     setShowExcluded(false);
     setIsSampleData(false);
-  }, []);
+    setShowSharedDataBanner(hasSharedData);
+  }, [hasSharedData]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -435,6 +472,39 @@ const TrueMonthlyCost = () => {
               Your transactions are analyzed in your browser. Only spending summaries are shared if you opt into AI insights.
             </p>
           </div>
+
+          {/* Shared Data Banner */}
+          {showSharedDataBanner && !hasAnalyzed && (
+            <Card className="mb-4 bg-lab-teal/5 border-lab-teal/30">
+              <CardContent className="py-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <ArrowRight size={18} className="text-lab-teal" />
+                    <p className="text-sm text-lab-navy">
+                      Use the <span className="font-medium">{sharedTransactions.length.toLocaleString()} transactions</span> you already uploaded in Money Snapshot?
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowSharedDataBanner(false)}
+                      className="text-muted-foreground"
+                    >
+                      No thanks
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={useSharedTransactions}
+                      className="bg-lab-teal hover:bg-lab-teal/90"
+                    >
+                      Yes, use them
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* File Upload Section */}
           {!hasAnalyzed && (
@@ -599,9 +669,40 @@ const TrueMonthlyCost = () => {
               )}
 
               {/* Debug info */}
-              <p className="text-xs text-muted-foreground text-center mb-4">
-                Analyzing {totalTransactions.toLocaleString()} transactions • Found {recurringItems.length} recurring patterns • {filteredItems.length} shown after filters
-              </p>
+              {detectionDebug && (
+                <Collapsible open={debugOpen} onOpenChange={setDebugOpen} className="mb-4">
+                  <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-lab-navy transition-colors mx-auto">
+                    <Info size={14} />
+                    <span>
+                      Analyzed {detectionDebug.totalTransactionsAnalyzed.toLocaleString()} transactions • 
+                      Found {detectionDebug.uniqueMerchantsAfterMerging} unique merchants • 
+                      {recurringItems.length} recurring patterns
+                    </span>
+                    {debugOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-3 p-4 bg-muted/30 rounded-lg text-xs text-muted-foreground space-y-2">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                        <span>Total transactions:</span><span className="font-medium text-lab-navy">{detectionDebug.totalTransactionsAnalyzed}</span>
+                        <span>After cleaning:</span><span className="font-medium text-lab-navy">{detectionDebug.uniqueMerchantsAfterCleaning} merchants</span>
+                        <span>After fuzzy merging:</span><span className="font-medium text-lab-navy">{detectionDebug.uniqueMerchantsAfterMerging} merchants</span>
+                        <span>Potentially recurring:</span><span className="font-medium text-lab-navy">{detectionDebug.potentiallyRecurring}</span>
+                        <span>Passed threshold:</span><span className="font-medium text-lab-navy">{detectionDebug.passedConfidenceThreshold}</span>
+                      </div>
+                      <div className="pt-2 border-t border-border/50">
+                        <p className="font-medium text-lab-navy mb-1">Filtered out:</p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                          <span>Too few occurrences:</span><span>{detectionDebug.filteredReasons.tooFewOccurrences}</span>
+                          <span>Too short span:</span><span>{detectionDebug.filteredReasons.tooShortSpan}</span>
+                          <span>Clustered buying:</span><span>{detectionDebug.filteredReasons.clusteredBuying}</span>
+                          <span>High variance:</span><span>{detectionDebug.filteredReasons.highVariance}</span>
+                          <span>Inconsistent intervals:</span><span>{detectionDebug.filteredReasons.inconsistentIntervals}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
               {/* Summary Card */}
               <Card className="mb-8 border-lab-teal/30 bg-gradient-to-br from-lab-teal/5 to-transparent">
                 <CardContent className="pt-8 pb-8">
