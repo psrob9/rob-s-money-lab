@@ -2,6 +2,7 @@ import { ClipboardList, Download, RefreshCw, ArrowRight, MessageSquare } from "l
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { FeedbackModal } from "@/components/FeedbackModal";
 
 interface SummaryCardProps {
   totalIn: number;
@@ -116,17 +117,19 @@ export const SummaryCard = ({
               <span className="text-[10px] text-muted-foreground">Analyze new files</span>
             </Button>
             
-            <Button
-              variant="outline"
-              className="flex flex-col items-center gap-1 h-auto py-3 px-3"
-              asChild
-            >
-              <a href="mailto:feedback@example.com">
-                <MessageSquare size={18} className="text-lab-teal" />
-                <span className="text-xs font-medium">Share Feedback</span>
-                <span className="text-[10px] text-muted-foreground">Help us improve</span>
-              </a>
-            </Button>
+            <FeedbackModal 
+              source="Money Snapshot"
+              trigger={
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center gap-1 h-auto py-3 px-3"
+                >
+                  <MessageSquare size={18} className="text-lab-teal" />
+                  <span className="text-xs font-medium">Share Feedback</span>
+                  <span className="text-[10px] text-muted-foreground">Help us improve</span>
+                </Button>
+              }
+            />
           </div>
         </div>
       </CardContent>
