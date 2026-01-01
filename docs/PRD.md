@@ -20,6 +20,8 @@ Rob's Money Lab is a portfolio of privacy-first personal finance tools designed 
 
 ## 2. Target Personas
 
+> **See also:** [Persona Analysis](./PERSONA_ANALYSIS.md) for detailed UX friction analysis by persona
+
 ### Primary: The Overwhelmed Budgeter
 - Tried YNAB/Mint but found it too complex or time-consuming
 - Wants to understand spending without maintaining a system
