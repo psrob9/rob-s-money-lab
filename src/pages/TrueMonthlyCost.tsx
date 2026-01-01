@@ -608,6 +608,28 @@ const TrueMonthlyCost = () => {
                   </>
                 )}
 
+                {/* Bank Export Instructions */}
+                {uploadedFiles.length === 0 && (
+                  <Collapsible className="mt-4">
+                    <CollapsibleTrigger className="flex items-center gap-2 text-sm text-lab-teal hover:underline">
+                      <ChevronDown size={16} className="transition-transform [[data-state=open]_&]:rotate-180" />
+                      How do I get a CSV from my bank?
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-4 p-4 bg-muted/30 rounded-lg">
+                      <p className="text-sm text-lab-warm-gray mb-3">
+                        Most banks let you export transactions as CSV from their website:
+                      </p>
+                      <ul className="text-sm text-lab-warm-gray space-y-2">
+                        <li><span className="font-medium text-lab-navy">Chase:</span> Accounts → Download account activity → CSV</li>
+                        <li><span className="font-medium text-lab-navy">Bank of America:</span> Statements & Documents → Download → Spreadsheet (CSV)</li>
+                        <li><span className="font-medium text-lab-navy">Capital One:</span> Account → Download Transactions → CSV</li>
+                        <li><span className="font-medium text-lab-navy">Wells Fargo:</span> Account → Download → Comma Delimited</li>
+                        <li><span className="font-medium text-lab-navy">Other banks:</span> Look for 'Export', 'Download', or 'Statements' in your online banking</li>
+                      </ul>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
                 {/* File List */}
                 {uploadedFiles.length > 0 && (
                   <div className="mt-6 space-y-2">
@@ -841,6 +863,232 @@ const TrueMonthlyCost = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* What to Do With This - Moved up before the table */}
+              <Card className="mb-8 bg-lab-sage/5 border-lab-sage/20">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <Lightbulb className="text-lab-sage mt-0.5" size={20} />
+                    <div>
+                      <h3 className="font-semibold text-lab-navy mb-3">What to Do With This</h3>
+                      <ul className="text-sm text-lab-warm-gray space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-lab-sage">•</span>
+                          <span>Review the 'Hidden Costs' above — these are easy to forget when budgeting</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-lab-sage">•</span>
+                          <span>Toggle off anything that's not actually recurring (one-time purchases the algorithm caught)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-lab-sage">•</span>
+                          <span>Use your True Monthly Cost (<span className="font-medium text-lab-navy">{formatCurrency(summary.totalMonthly)}</span>) as your baseline for budgeting recurring expenses</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-lab-sage">•</span>
+                          <span>Consider if any subscriptions could be canceled or downgraded</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recurring Items Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign size={20} className="text-lab-teal" />
+                    Your Recurring Costs
+                  </CardTitle>
+                  <CardDescription>
+                    Review and adjust detected recurring expenses. Change frequency if we got it wrong.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Filter Bar */}
+                  <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Filter size={16} />
+                      <span>Filters:</span>
+                    </div>
+                    
+                    {/* Frequency Filter */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          Frequency
+                          <ChevronDown size={14} className="ml-1" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2" align="start">
+                        {FREQUENCY_OPTIONS.map((freq) => (
+                          <label key={freq} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer">
+                            <Checkbox
+                              checked={selectedFrequencies.has(freq)}
+                              onCheckedChange={() => toggleFrequencyFilter(freq)}
+                            />
+                            <span className="text-sm">{formatFrequency(freq)}</span>
+                          </label>
+                        ))}
+                      </PopoverContent>
+                    </Popover>
+                    
+                    {/* Confidence Filter */}
+                    <Select value={confidenceFilter} onValueChange={setConfidenceFilter}>
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="Confidence" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONFIDENCE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Sort By */}
+                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                      <SelectTrigger className="w-[180px] h-8">
+                        <SlidersHorizontal size={14} className="mr-1" />
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly-desc">Monthly cost (high→low)</SelectItem>
+                        <SelectItem value="monthly-asc">Monthly cost (low→high)</SelectItem>
+                        <SelectItem value="merchant-asc">Merchant name (A-Z)</SelectItem>
+                        <SelectItem value="occurrences-desc">Occurrences (most first)</SelectItem>
+                        <SelectItem value="confidence-desc">Confidence (high first)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Show Excluded Toggle */}
+                    <Button
+                      variant={showExcluded ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-8 ml-auto"
+                      onClick={() => setShowExcluded(!showExcluded)}
+                    >
+                      {showExcluded ? <Eye size={14} className="mr-1" /> : <EyeOff size={14} className="mr-1" />}
+                      {showExcluded ? 'Showing excluded' : 'Show excluded'}
+                    </Button>
+                  </div>
+                  
+                  {/* Results count */}
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Showing {filteredItems.length} of {recurringItems.length} items
+                  </p>
+
+                  {filteredItems.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      No items match your current filters. Try adjusting the filters above.
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[40%]">Merchant</TableHead>
+                            <TableHead>Frequency</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="text-right">Monthly</TableHead>
+                            <TableHead className="text-center">Include</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredItems.map((item) => (
+                            <>
+                              <TableRow 
+                                key={item.id}
+                                className={`${item.isExcluded ? 'opacity-50 bg-muted/20' : ''} cursor-pointer hover:bg-muted/50`}
+                                onClick={() => toggleRowExpansion(item.id)}
+                              >
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    {expandedRows.has(item.id) ? (
+                                      <ChevronUp size={14} className="text-muted-foreground flex-shrink-0" />
+                                    ) : (
+                                      <ChevronDown size={14} className="text-muted-foreground flex-shrink-0" />
+                                    )}
+                                    <div>
+                                      <p className="font-medium text-lab-navy">{item.merchant}</p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        {getConfidenceBadge(item.confidence)}
+                                        <span className="text-xs text-muted-foreground">
+                                          {item.occurrences} occurrence{item.occurrences !== 1 ? 's' : ''} over {Math.round(item.dateSpanDays)} days
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                  <Select
+                                    value={item.frequency}
+                                    onValueChange={(val) => updateFrequency(item.id, val as Frequency)}
+                                  >
+                                    <SelectTrigger className="w-[130px]">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="weekly">Weekly</SelectItem>
+                                      <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
+                                      <SelectItem value="monthly">Monthly</SelectItem>
+                                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                                      <SelectItem value="annual">Annual</SelectItem>
+                                      <SelectItem value="irregular">Irregular</SelectItem>
+                                      <SelectItem value="one-time">One-time</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {formatCurrency(item.averageAmount)}
+                                </TableCell>
+                                <TableCell className="text-right font-mono font-medium text-lab-teal">
+                                  {item.frequency === 'one-time' ? '—' : formatCurrency(item.monthlyEquivalent)}
+                                </TableCell>
+                                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                                  <Switch
+                                    checked={!item.isExcluded}
+                                    onCheckedChange={() => toggleExclude(item.id)}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                              {/* Expanded Row - Transaction Details */}
+                              {expandedRows.has(item.id) && (
+                                <TableRow key={`${item.id}-expanded`}>
+                                  <TableCell colSpan={5} className="bg-muted/30 p-0">
+                                    <div className="p-4">
+                                      <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+                                        <span>Avg interval: {Math.round(item.avgIntervalDays)} days</span>
+                                        <span>Interval variation: ±{Math.round(item.intervalStdDev)} days</span>
+                                      </div>
+                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                                        Recent Transactions
+                                      </p>
+                                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                                        {item.transactions.slice(0, 10).map((txn, idx) => (
+                                          <div key={idx} className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">{formatDate(txn.date)}</span>
+                                            <span className="font-mono">{formatCurrency(Math.abs(txn.amount))}</span>
+                                          </div>
+                                        ))}
+                                        {item.transactions.length > 10 && (
+                                          <p className="text-xs text-muted-foreground pt-1">
+                                            + {item.transactions.length - 10} more transactions
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* AI Insights Prompt */}
               {showAiPrompt && !aiInsights && (
@@ -1092,36 +1340,6 @@ const TrueMonthlyCost = () => {
                       </Table>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-
-              {/* What to Do With This */}
-              <Card className="mb-8 bg-lab-sage/5 border-lab-sage/20">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="text-lab-sage mt-0.5" size={20} />
-                    <div>
-                      <h3 className="font-semibold text-lab-navy mb-3">What to Do With This</h3>
-                      <ul className="text-sm text-lab-warm-gray space-y-2">
-                        <li className="flex items-start gap-2">
-                          <span className="text-lab-sage">•</span>
-                          <span>Review the 'Hidden Costs' above — these are easy to forget when budgeting</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-lab-sage">•</span>
-                          <span>Toggle off anything that's not actually recurring (one-time purchases the algorithm caught)</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-lab-sage">•</span>
-                          <span>Use your True Monthly Cost (<span className="font-medium text-lab-navy">{formatCurrency(summary.totalMonthly)}</span>) as your baseline for budgeting recurring expenses</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-lab-sage">•</span>
-                          <span>Consider if any subscriptions could be canceled or downgraded</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
