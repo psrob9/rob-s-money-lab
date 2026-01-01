@@ -1,9 +1,5 @@
-import { ClipboardList, Download, RefreshCw, ArrowRight, MessageSquare } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { useState } from "react";
-import { FeedbackModal } from "@/components/FeedbackModal";
 
 interface SummaryCardProps {
   totalIn: number;
@@ -12,8 +8,6 @@ interface SummaryCardProps {
   monthsSpan: number;
   transactionCount: number;
   topCategories: string[];
-  onReset: () => void;
-  onDownload?: () => void;
 }
 
 const formatCurrency = (amount: number): string => {
@@ -32,8 +26,6 @@ export const SummaryCard = ({
   monthsSpan,
   transactionCount,
   topCategories,
-  onReset,
-  onDownload,
 }: SummaryCardProps) => {
   const savingsRate = totalIn > 0 ? (net / totalIn) * 100 : 0;
 
@@ -45,8 +37,7 @@ export const SummaryCard = ({
           Summary
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Summary stats */}
+      <CardContent>
         <div className="space-y-2 text-sm">
           <p className="text-muted-foreground">
             Over <span className="font-medium text-lab-navy">{monthsSpan} month{monthsSpan !== 1 ? 's' : ''}</span>, you:
@@ -79,60 +70,6 @@ export const SummaryCard = ({
               </li>
             )}
           </ul>
-        </div>
-
-        <div className="border-t border-border pt-5">
-          <p className="text-sm font-medium text-lab-navy mb-4">What's Next?</p>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              className="flex flex-col items-center gap-1 h-auto py-3 px-3"
-              onClick={onDownload}
-              disabled={!onDownload}
-            >
-              <Download size={18} className="text-lab-teal" />
-              <span className="text-xs font-medium">Download CSV</span>
-              <span className="text-[10px] text-muted-foreground">Export categorized data</span>
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="flex flex-col items-center gap-1 h-auto py-3 px-3"
-              asChild
-            >
-              <Link to="/tools/true-monthly-cost">
-                <ArrowRight size={18} className="text-lab-teal" />
-                <span className="text-xs font-medium">True Monthly Cost</span>
-                <span className="text-[10px] text-muted-foreground">Find recurring costs</span>
-              </Link>
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="flex flex-col items-center gap-1 h-auto py-3 px-3"
-              onClick={onReset}
-            >
-              <RefreshCw size={18} className="text-lab-teal" />
-              <span className="text-xs font-medium">Start Over</span>
-              <span className="text-[10px] text-muted-foreground">Analyze new files</span>
-            </Button>
-            
-            <FeedbackModal 
-              context="money-snapshot"
-              variant="tool-feedback"
-              trigger={
-                <Button
-                  variant="outline"
-                  className="flex flex-col items-center gap-1 h-auto py-3 px-3"
-                >
-                  <MessageSquare size={18} className="text-lab-teal" />
-                  <span className="text-xs font-medium">Share Feedback</span>
-                  <span className="text-[10px] text-muted-foreground">Help us improve</span>
-                </Button>
-              }
-            />
-          </div>
         </div>
       </CardContent>
     </Card>
