@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings, CheckCircle2, Beaker } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -1268,20 +1269,34 @@ const MoneySnapshot = () => {
                   )}
                   
                   {!insights && !insightsLoading && !insightsError && (
-                    <div className="py-4 space-y-4">
-                      <p className="text-lab-navy font-medium">
-                        Want AI-powered insights about your spending?
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        This will send a summary of your spending (totals and categories only) to Claude AI for analysis. Your individual transactions stay on your device.
-                      </p>
-                      <Button 
-                        onClick={fetchInsights}
-                        className="bg-lab-teal hover:bg-lab-teal/90 text-white"
-                      >
-                        <Sparkles size={14} className="mr-2" />
-                        Get AI Insights
-                      </Button>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start gap-3">
+                        <Sparkles className="text-purple-500 mt-0.5" size={20} />
+                        <div>
+                          <h3 className="font-semibold text-lab-navy mb-1">Want AI insights about your spending?</h3>
+                          <p className="text-sm text-muted-foreground">
+                            AI can spot unusual patterns and highlight opportunities in your budget.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="bg-purple-50 border border-purple-200/50 rounded-lg p-3">
+                        <p className="text-xs text-purple-700">
+                          <span className="font-medium">What's shared:</span> Only category totals and percentages (e.g., "Food & Dining - $485, 18%"). 
+                          Your individual transactions are never sent.
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Link to="/about#privacy" className="text-xs text-muted-foreground hover:text-lab-teal transition-colors">
+                          Learn more about privacy
+                        </Link>
+                        <Button 
+                          onClick={fetchInsights}
+                          variant="outline"
+                          className="border-purple-300 hover:bg-purple-50"
+                        >
+                          I understand, get insights
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
