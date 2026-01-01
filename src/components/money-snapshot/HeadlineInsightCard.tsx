@@ -108,10 +108,10 @@ const generateHeadlineInsight = ({
     };
   }
   
-  // 6. Uncategorized insight
+  // 6. Needs Review insight
   if (uncategorizedPercentage > 30) {
     return {
-      headline: `${Math.round(uncategorizedPercentage)}% of your spending is uncategorized.`,
+      headline: `${Math.round(uncategorizedPercentage)}% of your spending needs review.`,
       subtext: "There might be patterns hiding in there.",
     };
   }

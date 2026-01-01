@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker, Info, ArrowRight } from "lucide-react";
+import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker, Info, ArrowRight, Download, Lightbulb } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -373,6 +373,40 @@ const TrueMonthlyCost = () => {
       case 'one-time': return 'One-time';
     }
   };
+
+  // Download results as CSV
+  const handleDownloadResults = useCallback(() => {
+    if (recurringItems.length === 0) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const filename = `recurring-costs-${today}.csv`;
+    
+    // Build CSV content
+    const headers = ['Merchant', 'Frequency', 'Average Amount', 'Monthly Equivalent', 'Confidence', 'Included'];
+    const rows = recurringItems.map(item => [
+      `"${item.merchant.replace(/"/g, '""')}"`,
+      formatFrequency(item.frequency),
+      item.averageAmount.toFixed(2),
+      item.monthlyEquivalent.toFixed(2),
+      item.confidence,
+      item.isExcluded ? 'No' : 'Yes'
+    ].join(','));
+    
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    toast({
+      title: 'Results downloaded!',
+      description: `Saved as ${filename}`
+    });
+  }, [recurringItems, toast]);
 
   const readyFiles = uploadedFiles.filter(f => f.status === 'ready');
   const canAnalyze = readyFiles.length > 0;
@@ -764,6 +798,17 @@ const TrueMonthlyCost = () => {
                         {!showExcluded && ' (toggle "Show excluded" to review)'}
                       </p>
                     )}
+                    
+                    {/* Download Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-6"
+                      onClick={handleDownloadResults}
+                    >
+                      <Download size={16} className="mr-2" />
+                      Download Results
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -1047,6 +1092,36 @@ const TrueMonthlyCost = () => {
                       </Table>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* What to Do With This */}
+              <Card className="mb-8 bg-lab-sage/5 border-lab-sage/20">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <Lightbulb className="text-lab-sage mt-0.5" size={20} />
+                    <div>
+                      <h3 className="font-semibold text-lab-navy mb-3">What to Do With This</h3>
+                      <ul className="text-sm text-lab-warm-gray space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-lab-sage">•</span>
+                          <span>Review the 'Hidden Costs' above — these are easy to forget when budgeting</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-lab-sage">•</span>
+                          <span>Toggle off anything that's not actually recurring (one-time purchases the algorithm caught)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-lab-sage">•</span>
+                          <span>Use your True Monthly Cost (<span className="font-medium text-lab-navy">{formatCurrency(summary.totalMonthly)}</span>) as your baseline for budgeting recurring expenses</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-lab-sage">•</span>
+                          <span>Consider if any subscriptions could be canceled or downgraded</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
