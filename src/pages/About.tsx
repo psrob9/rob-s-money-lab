@@ -1,5 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { Link } from "react-router-dom";
+import robPhoto from "@/assets/rob.jpg";
 
 const About = () => {
   return (
@@ -7,10 +8,19 @@ const About = () => {
       <section className="py-16 sm:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl">
           {/* Hey, I'm Rob */}
-          <h1 className="text-3xl sm:text-4xl font-bold text-lab-navy mb-4">
-            Hey, I'm Rob
-          </h1>
-          <div className="w-16 h-1 bg-lab-teal rounded-full mb-8" />
+          <div className="flex items-center gap-6 mb-8">
+            <img 
+              src={robPhoto} 
+              alt="Rob" 
+              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover shadow-lg border-4 border-lab-teal/20"
+            />
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-lab-navy mb-2">
+                Hey, I'm Rob
+              </h1>
+              <div className="w-16 h-1 bg-lab-teal rounded-full" />
+            </div>
+          </div>
           
           <div className="prose prose-lg max-w-none space-y-6 text-lab-warm-gray leading-relaxed">
             <p>
