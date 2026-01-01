@@ -20,7 +20,7 @@ import {
   extractPattern,
   type LearnedCategory 
 } from "@/utils/categoryLearning";
-import { HeadlineInsightCard, QuickStatsBar, QuickWinsCard, SummaryCard } from "@/components/money-snapshot";
+import { HeadlineInsightCard, QuickStatsBar, QuickWinsCard, SummaryCard, WhatsNextCard } from "@/components/money-snapshot";
 import { SAMPLE_PERSONA, getSampleTransactionsForMoneySnapshot } from "@/utils/sampleData";
 
 interface Transaction {
@@ -1138,7 +1138,7 @@ const MoneySnapshot = () => {
                 </CardContent>
               </Card>
 
-              {/* 4. Summary - Moved up from bottom */}
+              {/* 4. Summary */}
               <SummaryCard
                 totalIn={analysis.totalIn}
                 totalOut={analysis.totalOut}
@@ -1146,8 +1146,6 @@ const MoneySnapshot = () => {
                 monthsSpan={analysis.monthsSpan}
                 transactionCount={totalTransactionCount}
                 topCategories={categoryBreakdown.slice(0, 3).map(c => c.name)}
-                onReset={handleReset}
-                onDownload={handleDownloadResults}
               />
 
               {/* 5. Where It Goes */}
@@ -1372,6 +1370,12 @@ const MoneySnapshot = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* 8. What's Next */}
+              <WhatsNextCard
+                onReset={handleReset}
+                onDownload={handleDownloadResults}
+              />
 
             </div>
           )}
