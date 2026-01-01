@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { ToolCard } from "@/components/ToolCard";
+import { FeedbackModal } from "@/components/FeedbackModal";
+import { Lightbulb, ArrowRight } from "lucide-react";
 
 const Tools = () => {
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
   return (
     <Layout>
       <section className="py-16 sm:py-24">
@@ -28,21 +33,32 @@ const Tools = () => {
               href="/tools/true-monthly-cost"
             />
             
-            {/* Placeholder card for future tools */}
-            <div className="bg-card/50 rounded-xl border border-dashed border-border p-6 flex flex-col items-center justify-center min-h-[180px] text-center">
-              <p className="text-muted-foreground text-sm mb-1">New tool</p>
-              <p className="text-xs text-muted-foreground">Coming soon...</p>
-            </div>
+            {/* Got an Idea card */}
+            <button
+              onClick={() => setFeedbackOpen(true)}
+              className="bg-card rounded-xl border border-border p-6 flex flex-col min-h-[180px] text-left hover:shadow-md hover:border-lab-teal/30 transition-all group"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-lg bg-lab-amber/10">
+                  <Lightbulb className="text-lab-amber" size={20} />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-lab-navy mb-2">Got an Idea?</h3>
+              <p className="text-sm text-muted-foreground flex-1">
+                I'm always looking for simple money questions that could use a better answer.
+              </p>
+              <span className="text-sm font-medium text-lab-teal flex items-center gap-1 mt-4 group-hover:gap-2 transition-all">
+                Share Your Idea <ArrowRight size={14} />
+              </span>
+            </button>
           </div>
 
-          <div className="mt-16 p-8 bg-amber-50/50 rounded-xl border border-amber-200/50 text-center">
-            <h2 className="text-xl font-semibold text-lab-navy mb-3">
-              Got an idea for a tool?
-            </h2>
-            <p className="text-lab-warm-gray max-w-md mx-auto">
-              I'm always looking for simple money questions that could use a better answer. Let me know what you're struggling with.
-            </p>
-          </div>
+          <FeedbackModal
+            isOpen={feedbackOpen}
+            onClose={() => setFeedbackOpen(false)}
+            context="tools-page"
+            variant="idea"
+          />
         </div>
       </section>
     </Layout>

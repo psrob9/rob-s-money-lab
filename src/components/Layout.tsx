@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, FlaskConical } from "lucide-react";
+import { Menu, X, FlaskConical, MessageSquare } from "lucide-react";
+import { FeedbackModal } from "@/components/FeedbackModal";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -14,10 +15,17 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackContext, setFeedbackContext] = useState<"header" | "footer">("header");
   const location = useLocation();
   const currentYear = new Date().getFullYear();
 
   const isActive = (path: string) => location.pathname === path;
+  
+  const openFeedback = (context: "header" | "footer") => {
+    setFeedbackContext(context);
+    setFeedbackOpen(true);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -48,6 +56,12 @@ export function Layout({ children }: LayoutProps) {
                   {link.label}
                 </Link>
               ))}
+              <button
+                onClick={() => openFeedback("header")}
+                className="text-sm font-medium text-lab-warm-gray hover:text-lab-navy transition-colors"
+              >
+                Feedback
+              </button>
             </nav>
 
             {/* Mobile menu button */}
@@ -79,6 +93,15 @@ export function Layout({ children }: LayoutProps) {
                   {link.label}
                 </Link>
               ))}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openFeedback("header");
+                }}
+                className="text-base font-medium py-2 text-lab-warm-gray hover:text-lab-navy transition-colors text-left"
+              >
+                Feedback
+              </button>
             </nav>
           </div>
         )}
@@ -97,14 +120,31 @@ export function Layout({ children }: LayoutProps) {
               <FlaskConical size={16} className="text-lab-teal" />
               <span>Rob's Money Lab</span>
             </p>
-            <p className="flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-lab-sage"></span>
-              Your transaction data stays private
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-lab-sage"></span>
+                Your transaction data stays private
+              </p>
+              <button
+                onClick={() => openFeedback("footer")}
+                className="flex items-center gap-1 hover:text-lab-navy transition-colors"
+              >
+                <MessageSquare size={14} />
+                Share feedback
+              </button>
+            </div>
             <p>© {currentYear}</p>
           </div>
         </div>
       </footer>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        context={feedbackContext}
+        variant="idea"
+      />
     </div>
   );
 }

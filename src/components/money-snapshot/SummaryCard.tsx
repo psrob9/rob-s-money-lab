@@ -2,6 +2,7 @@ import { ClipboardList, Download, RefreshCw, ArrowRight, MessageSquare } from "l
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { FeedbackModal } from "@/components/FeedbackModal";
 
 interface SummaryCardProps {
@@ -118,7 +119,8 @@ export const SummaryCard = ({
             </Button>
             
             <FeedbackModal 
-              source="Money Snapshot"
+              context="money-snapshot"
+              variant="tool-feedback"
               trigger={
                 <Button
                   variant="outline"
