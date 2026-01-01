@@ -36,9 +36,10 @@ export function Layout({ children }: LayoutProps) {
             {/* Logo */}
             <Link 
               to="/" 
-              className="text-xl font-bold text-lab-navy hover:text-lab-teal transition-colors"
+              className="flex items-center gap-2 text-xl font-bold text-lab-navy hover:text-lab-teal transition-colors"
             >
-              Rob's Money Lab
+              <img src="/favicon.png" alt="Rob's Money Lab" className="w-8 h-8 rounded-lg" />
+              <span className="hidden sm:inline">Rob's Money Lab</span>
             </Link>
 
             {/* Desktop Navigation */}
