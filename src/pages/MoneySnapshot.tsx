@@ -1138,7 +1138,19 @@ const MoneySnapshot = () => {
                 </CardContent>
               </Card>
 
-              {/* 4. Where It Goes */}
+              {/* 4. Summary - Moved up from bottom */}
+              <SummaryCard
+                totalIn={analysis.totalIn}
+                totalOut={analysis.totalOut}
+                net={analysis.net}
+                monthsSpan={analysis.monthsSpan}
+                transactionCount={totalTransactionCount}
+                topCategories={categoryBreakdown.slice(0, 3).map(c => c.name)}
+                onReset={handleReset}
+                onDownload={handleDownloadResults}
+              />
+
+              {/* 5. Where It Goes */}
               <Card className="border-border shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg text-lab-navy">Where It Goes</CardTitle>
@@ -1277,14 +1289,14 @@ const MoneySnapshot = () => {
                 </CardContent>
               </Card>
 
-              {/* 5. Quick Wins */}
+              {/* 6. Quick Wins */}
               <QuickWinsCard
                 categoryBreakdown={categoryBreakdown}
                 monthsSpan={analysis.monthsSpan}
                 totalOut={analysis.totalOut}
               />
 
-              {/* 6. Patterns (AI Insights) */}
+              {/* 7. Patterns (AI Insights) */}
               <Card className="border-border shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg text-lab-navy flex items-center gap-2">
@@ -1361,17 +1373,6 @@ const MoneySnapshot = () => {
                 </CardContent>
               </Card>
 
-              {/* 7. Summary + Next Steps */}
-              <SummaryCard
-                totalIn={analysis.totalIn}
-                totalOut={analysis.totalOut}
-                net={analysis.net}
-                monthsSpan={analysis.monthsSpan}
-                transactionCount={totalTransactionCount}
-                topCategories={categoryBreakdown.slice(0, 3).map(c => c.name)}
-                onReset={handleReset}
-                onDownload={handleDownloadResults}
-              />
             </div>
           )}
         </div>
