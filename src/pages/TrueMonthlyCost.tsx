@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -715,7 +716,10 @@ const TrueMonthlyCost = () => {
                           Your individual transactions are never sent.
                         </p>
                       </div>
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-between">
+                        <Link to="/about#privacy" className="text-xs text-muted-foreground hover:text-purple-600 transition-colors">
+                          Learn more about privacy
+                        </Link>
                         <Button 
                           onClick={getAiInsights}
                           disabled={isLoadingInsights}

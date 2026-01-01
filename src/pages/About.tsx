@@ -71,7 +71,7 @@ const About = () => {
           </div>
 
           {/* Privacy First */}
-          <div className="mt-12">
+          <div id="privacy" className="mt-12 scroll-mt-20">
             <h2 className="text-2xl font-bold text-lab-navy mb-6">Privacy First</h2>
             
             <p className="text-lab-warm-gray mb-6 leading-relaxed">
