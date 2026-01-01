@@ -6,6 +6,62 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_REQUESTS_PER_WINDOW = 10;
+const MAX_BODY_SIZE = 50 * 1024; // 50KB
+
+// In-memory rate limit store
+const rateLimitStore = new Map<string, { count: number; windowStart: number }>();
+let requestCount = 0;
+
+function getClientIP(req: Request): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+         req.headers.get('x-real-ip') || 
+         'unknown';
+}
+
+function cleanupExpiredEntries() {
+  const now = Date.now();
+  for (const [key, value] of rateLimitStore.entries()) {
+    if (now - value.windowStart > RATE_LIMIT_WINDOW_MS) {
+      rateLimitStore.delete(key);
+    }
+  }
+}
+
+function checkRateLimit(ip: string): { allowed: boolean; remaining: number; retryAfterMinutes?: number } {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+
+  // Cleanup every 100 requests
+  requestCount++;
+  if (requestCount % 100 === 0) {
+    cleanupExpiredEntries();
+  }
+
+  if (!record || now - record.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitStore.set(ip, { count: 1, windowStart: now });
+    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1 };
+  }
+
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    const msRemaining = RATE_LIMIT_WINDOW_MS - (now - record.windowStart);
+    const minutesRemaining = Math.ceil(msRemaining / 60000);
+    return { allowed: false, remaining: 0, retryAfterMinutes: minutesRemaining };
+  }
+
+  record.count++;
+  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count };
+}
+
+function sanitizeString(input: string): string {
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]*on\w+\s*=\s*["'][^"']*["'][^>]*>/gi, '')
+    .replace(/javascript:/gi, '');
+}
+
 interface RecurringItem {
   merchant: string;
   frequency: string;
@@ -35,16 +91,116 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const clientIP = getClientIP(req);
+
+  // Check rate limit
+  const rateLimitResult = checkRateLimit(clientIP);
+  if (!rateLimitResult.allowed) {
+    console.log(`Rate limit exceeded for IP: ${clientIP}`);
+    return new Response(
+      JSON.stringify({ error: `Rate limit exceeded. Please try again in ${rateLimitResult.retryAfterMinutes} minutes.` }),
+      { 
+        status: 429, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+
+  const responseHeaders = {
+    ...corsHeaders,
+    'Content-Type': 'application/json',
+    'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+  };
+
   try {
+    // Check Content-Length if available
+    const contentLength = req.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
+      return new Response(
+        JSON.stringify({ error: 'Request body too large. Maximum size is 50KB.' }),
+        { status: 400, headers: responseHeaders }
+      );
+    }
+
+    // Read and validate request body
+    let rawBody: string;
+    try {
+      rawBody = await req.text();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Failed to read request body.' }),
+        { status: 400, headers: responseHeaders }
+      );
+    }
+
+    if (rawBody.length > MAX_BODY_SIZE) {
+      return new Response(
+        JSON.stringify({ error: 'Request body too large. Maximum size is 50KB.' }),
+        { status: 400, headers: responseHeaders }
+      );
+    }
+
+    let body: RequestBody;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body.' }),
+        { status: 400, headers: responseHeaders }
+      );
+    }
+
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicApiKey) {
       throw new Error('ANTHROPIC_API_KEY not configured');
     }
 
-    const { summary, items }: RequestBody = await req.json();
+    const { summary, items } = body;
 
     if (!summary || !items) {
-      throw new Error('Missing summary or items in request');
+      return new Response(
+        JSON.stringify({ error: 'Missing summary or items in request.' }),
+        { status: 400, headers: responseHeaders }
+      );
+    }
+
+    // Validate summary fields
+    if (
+      typeof summary.totalMonthly !== 'number' ||
+      typeof summary.itemCount !== 'number' ||
+      typeof summary.annualSubscriptionCount !== 'number' ||
+      typeof summary.quarterlySubscriptionCount !== 'number' ||
+      typeof summary.weeklyContribution !== 'number' ||
+      typeof summary.monthlyContribution !== 'number' ||
+      typeof summary.quarterlyContribution !== 'number' ||
+      typeof summary.annualContribution !== 'number'
+    ) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid summary format. Required numeric fields: totalMonthly, itemCount, annualSubscriptionCount, quarterlySubscriptionCount, weeklyContribution, monthlyContribution, quarterlyContribution, annualContribution.' }),
+        { status: 400, headers: responseHeaders }
+      );
+    }
+
+    // Validate items array
+    if (!Array.isArray(items)) {
+      return new Response(
+        JSON.stringify({ error: 'Items must be an array.' }),
+        { status: 400, headers: responseHeaders }
+      );
+    }
+
+    for (const item of items) {
+      if (
+        typeof item.merchant !== 'string' ||
+        typeof item.frequency !== 'string' ||
+        typeof item.amount !== 'number' ||
+        typeof item.monthlyEquivalent !== 'number'
+      ) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid item format. Each item must have merchant (string), frequency (string), amount (number), and monthlyEquivalent (number).' }),
+          { status: 400, headers: responseHeaders }
+        );
+      }
     }
 
     // Build the prompt
@@ -57,10 +213,10 @@ Your response should be 2-4 short paragraphs (no bullet points or headers). Focu
 
 Be conversational, like a financially-savvy friend giving advice over coffee.`;
 
-    // Format items for the prompt
+    // Format items for the prompt (sanitize merchant names)
     const itemsList = items
       .slice(0, 25) // Limit to top 25 items
-      .map(i => `- ${i.merchant}: ${i.frequency}, $${i.amount.toFixed(2)} (= $${i.monthlyEquivalent.toFixed(2)}/mo)`)
+      .map(i => `- ${sanitizeString(i.merchant)}: ${sanitizeString(i.frequency)}, $${i.amount.toFixed(2)} (= $${i.monthlyEquivalent.toFixed(2)}/mo)`)
       .join('\n');
 
     const userMessage = `Here's a summary of someone's recurring expenses:
@@ -107,9 +263,7 @@ Please provide brief, friendly insights about their recurring costs. Look for an
 
     return new Response(
       JSON.stringify({ insights }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { headers: responseHeaders }
     );
 
   } catch (error) {
@@ -121,7 +275,7 @@ Please provide brief, friendly insights about their recurring costs. Look for an
       }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-RateLimit-Remaining': rateLimitResult.remaining.toString() }
       }
     );
   }
