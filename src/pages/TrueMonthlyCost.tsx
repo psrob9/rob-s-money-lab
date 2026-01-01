@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff } from "lucide-react";
+import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -22,6 +22,7 @@ import {
   Frequency,
   Confidence
 } from "@/utils/recurringDetection";
+import { SAMPLE_PERSONA, getSampleTransactionsForRecurring } from "@/utils/sampleData";
 
 interface UploadedFile {
   file: File;
@@ -62,6 +63,9 @@ const TrueMonthlyCost = () => {
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const [aiInsights, setAiInsights] = useState<string | null>(null);
+  
+  // Sample data state
+  const [isSampleData, setIsSampleData] = useState(false);
   
   // Expanded rows state
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -339,6 +343,45 @@ const TrueMonthlyCost = () => {
   const canAnalyze = readyFiles.length > 0;
   const totalTransactions = readyFiles.reduce((sum, f) => sum + f.transactions.length, 0);
 
+  const handleLoadSampleData = useCallback(() => {
+    const sampleTxns = getSampleTransactionsForRecurring();
+    
+    // Create synthetic file entry
+    const sampleFile: UploadedFile = {
+      file: new File([], `Sample Data: ${SAMPLE_PERSONA.name}`),
+      status: 'ready',
+      transactions: sampleTxns
+    };
+    
+    setUploadedFiles([sampleFile]);
+    setIsSampleData(true);
+    
+    // Run analysis immediately
+    const recurring = findRecurringTransactions(sampleTxns);
+    setRecurringItems(recurring);
+    setHasAnalyzed(true);
+    setShowAiPrompt(true);
+    
+    toast({
+      title: "Sample data loaded",
+      description: `Analyzing ${sampleTxns.length} sample transactions for ${SAMPLE_PERSONA.name}.`
+    });
+  }, [toast]);
+
+  const handleReset = useCallback(() => {
+    setUploadedFiles([]);
+    setRecurringItems([]);
+    setHasAnalyzed(false);
+    setShowAiPrompt(false);
+    setAiInsights(null);
+    setExpandedRows(new Set());
+    setSelectedFrequencies(new Set(FREQUENCY_OPTIONS));
+    setConfidenceFilter('high-medium');
+    setSortBy('monthly-desc');
+    setShowExcluded(false);
+    setIsSampleData(false);
+  }, []);
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -436,6 +479,30 @@ const TrueMonthlyCost = () => {
                   </p>
                 </div>
 
+                {/* Sample Data Option */}
+                {uploadedFiles.length === 0 && (
+                  <>
+                    <div className="flex items-center justify-center gap-4 mt-6">
+                      <div className="h-px bg-border flex-1" />
+                      <span className="text-sm text-muted-foreground">or</span>
+                      <div className="h-px bg-border flex-1" />
+                    </div>
+                    
+                    <button
+                      onClick={handleLoadSampleData}
+                      className="w-full mt-4 p-4 rounded-lg border-2 border-dashed border-lab-amber/30 bg-lab-amber/5 hover:bg-lab-amber/10 hover:border-lab-amber/50 transition-colors text-center group"
+                    >
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <Beaker size={18} className="text-lab-amber" />
+                        <span className="font-medium text-lab-navy">Try with sample data</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        See how it works without uploading anything personal
+                      </p>
+                    </button>
+                  </>
+                )}
+
                 {/* File List */}
                 {uploadedFiles.length > 0 && (
                   <div className="mt-6 space-y-2">
@@ -512,6 +579,24 @@ const TrueMonthlyCost = () => {
           {/* Results Section */}
           {hasAnalyzed && (
             <>
+              {/* Sample Data Banner */}
+              {isSampleData && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 mb-4 bg-lab-amber/10 border border-lab-amber/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Beaker size={18} className="text-lab-amber" />
+                    <p className="text-sm text-lab-navy">
+                      Viewing sample data for <span className="font-medium">{SAMPLE_PERSONA.name}</span> — this isn't your real spending
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleReset}
+                    className="text-sm font-medium text-lab-amber hover:text-lab-amber/80 whitespace-nowrap"
+                  >
+                    Upload your own files →
+                  </button>
+                </div>
+              )}
+
               {/* Debug info */}
               <p className="text-xs text-muted-foreground text-center mb-4">
                 Analyzing {totalTransactions.toLocaleString()} transactions • Found {recurringItems.length} recurring patterns • {filteredItems.length} shown after filters
@@ -864,18 +949,7 @@ const TrueMonthlyCost = () => {
               <div className="mt-8 text-center">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setUploadedFiles([]);
-                    setRecurringItems([]);
-                    setHasAnalyzed(false);
-                    setShowAiPrompt(false);
-                    setAiInsights(null);
-                    setExpandedRows(new Set());
-                    setSelectedFrequencies(new Set(FREQUENCY_OPTIONS));
-                    setConfidenceFilter('high-medium');
-                    setSortBy('monthly-desc');
-                    setShowExcluded(false);
-                  }}
+                  onClick={handleReset}
                 >
                   Start Over with New Files
                 </Button>

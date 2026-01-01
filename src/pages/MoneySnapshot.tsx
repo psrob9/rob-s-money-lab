@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings, CheckCircle2 } from "lucide-react";
+import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings, CheckCircle2, Beaker } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -19,6 +19,7 @@ import {
   type LearnedCategory 
 } from "@/utils/categoryLearning";
 import { HeadlineInsightCard, QuickStatsBar, QuickWinsCard, SummaryCard } from "@/components/money-snapshot";
+import { SAMPLE_PERSONA, getSampleTransactionsForMoneySnapshot } from "@/utils/sampleData";
 
 interface Transaction {
   date: string;
@@ -281,6 +282,9 @@ const MoneySnapshot = () => {
   const [insights, setInsights] = useState<string | null>(null);
   const [insightsError, setInsightsError] = useState<string | null>(null);
   const [filesExpanded, setFilesExpanded] = useState(false);
+  
+  // Sample data state
+  const [isSampleData, setIsSampleData] = useState(false);
   
   // Category teaching state
   const [teachingTransaction, setTeachingTransaction] = useState<Transaction | null>(null);
@@ -706,7 +710,30 @@ const MoneySnapshot = () => {
     setInsightsError(null);
     setInsightsLoading(false);
     setFilesExpanded(false);
+    setIsSampleData(false);
   };
+
+  const handleLoadSampleData = useCallback(() => {
+    const sampleTxns = getSampleTransactionsForMoneySnapshot();
+    
+    // Create synthetic file entry
+    const sampleFile: UploadedFile = {
+      id: 'sample-data',
+      name: `Sample Data: ${SAMPLE_PERSONA.name}`,
+      transactions: sampleTxns,
+      dateRange: { start: '1/1/2025', end: '12/31/2025' },
+      status: 'ready'
+    };
+    
+    setFiles([sampleFile]);
+    setIsSampleData(true);
+    
+    // Run analysis immediately
+    const analysisResult = analyzeTransactions(sampleTxns);
+    setAnalysis(analysisResult);
+    setCategoryBreakdown(calculateCategoryBreakdown(sampleTxns));
+    setStep("results");
+  }, []);
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("en-US", {
@@ -791,6 +818,26 @@ const MoneySnapshot = () => {
                   Upload from multiple bank accounts and credit cards at once.
                 </p>
               </div>
+
+              {/* Sample Data Option */}
+              <div className="flex items-center justify-center gap-4">
+                <div className="h-px bg-border flex-1" />
+                <span className="text-sm text-muted-foreground">or</span>
+                <div className="h-px bg-border flex-1" />
+              </div>
+              
+              <button
+                onClick={handleLoadSampleData}
+                className="w-full p-4 rounded-lg border-2 border-dashed border-lab-amber/30 bg-lab-amber/5 hover:bg-lab-amber/10 hover:border-lab-amber/50 transition-colors text-center group"
+              >
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Beaker size={18} className="text-lab-amber" />
+                  <span className="font-medium text-lab-navy">Try with sample data</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  See how it works without uploading anything personal
+                </p>
+              </button>
 
               {/* Privacy Note */}
               <div className="flex items-start gap-3 p-4 bg-lab-teal/5 rounded-lg border border-lab-teal/20">
@@ -945,6 +992,24 @@ const MoneySnapshot = () => {
           {/* Step 3: Results */}
           {step === "results" && analysis && (
             <div className="space-y-6">
+              {/* Sample Data Banner */}
+              {isSampleData && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-lab-amber/10 border border-lab-amber/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Beaker size={18} className="text-lab-amber" />
+                    <p className="text-sm text-lab-navy">
+                      Viewing sample data for <span className="font-medium">{SAMPLE_PERSONA.name}</span> — this isn't your real spending
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleReset}
+                    className="text-sm font-medium text-lab-amber hover:text-lab-amber/80 whitespace-nowrap"
+                  >
+                    Upload your own files →
+                  </button>
+                </div>
+              )}
+
               {/* 1. Headline Insight Card - ABOVE THE FOLD */}
               <HeadlineInsightCard
                 totalIn={analysis.totalIn}
