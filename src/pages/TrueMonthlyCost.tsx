@@ -523,7 +523,7 @@ const TrueMonthlyCost = () => {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={loadSampleData}
+                onClick={handleLoadSampleData}
               >
                 <Beaker size={18} className="mr-2" />
                 Try Sample Data
