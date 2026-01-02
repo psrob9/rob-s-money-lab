@@ -21,6 +21,7 @@ import {
   type LearnedCategory 
 } from "@/utils/categoryLearning";
 import { HeadlineInsightCard, QuickStatsBar, QuickWinsCard, SummaryCard, WhatsNextCard } from "@/components/money-snapshot";
+import { EmailSignup } from "@/components/EmailSignup";
 import { SAMPLE_PERSONA, getSampleTransactionsForMoneySnapshot } from "@/utils/sampleData";
 
 interface Transaction {
@@ -1423,6 +1424,14 @@ const MoneySnapshot = () => {
                 onReset={handleReset}
                 onDownload={handleDownloadResults}
               />
+
+              {/* Email Signup */}
+              <div className="mt-8 border-t border-border pt-8">
+                <EmailSignup 
+                  heading="Want to know when I build more tools?" 
+                  variant="compact"
+                />
+              </div>
 
             </div>
           )}

@@ -27,6 +27,7 @@ import {
 } from "@/utils/recurringDetection";
 import { SAMPLE_PERSONA, getSampleTransactionsForRecurring } from "@/utils/sampleData";
 import { useTransactionContext } from "@/contexts/TransactionContext";
+import { EmailSignup } from "@/components/EmailSignup";
 
 interface UploadedFile {
   file: File;
@@ -1193,6 +1194,14 @@ const TrueMonthlyCost = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Email Signup */}
+              <div className="mt-8 border-t border-border pt-8">
+                <EmailSignup 
+                  heading="Want to know when I build more tools?" 
+                  variant="compact"
+                />
+              </div>
 
               {/* Start Over */}
               <div className="mt-8 text-center">
