@@ -58,10 +58,19 @@ const About = () => {
                   Find every recurring charge hiding in your transactions. Subscriptions, bills, annual fees—see what you're actually committed to spending each month.
                 </p>
               </div>
+
+              <div className="p-6 bg-secondary/50 rounded-xl border border-border">
+                <Link to="/tools/runway-calculator" className="text-lg font-semibold text-lab-navy hover:text-lab-teal transition-colors">
+                  Layoff Runway Calculator
+                </Link>
+                <p className="text-lab-warm-gray mt-2">
+                  Are you prepared for a layoff? Calculate how long your savings will last across different scenarios.
+                </p>
+              </div>
             </div>
-            
+
             <p className="text-lab-warm-gray mt-4 text-sm">
-              Both tools work with CSV exports from any bank. Not sure how it works? Try the sample data first—no upload required.
+              All three tools work with CSV exports from any bank. Not sure how it works? Try the sample data first—no upload required.
             </p>
           </div>
 
@@ -149,6 +158,18 @@ const About = () => {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Open Source */}
+          <div className="mt-8">
+            <p className="text-lab-warm-gray leading-relaxed">
+              Rob's Money Lab is open source. <a
+                href="https://github.com/psrob9/rob-s-money-lab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lab-teal hover:underline"
+              >View the code on GitHub</a> to see exactly how your data is processed.
+            </p>
           </div>
         </div>
       </section>

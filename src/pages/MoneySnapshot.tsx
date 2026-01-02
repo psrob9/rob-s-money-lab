@@ -924,6 +924,17 @@ const MoneySnapshot = () => {
                             <span>Category preferences are saved locally — if you teach the tool a new category, that's stored in your browser only</span>
                           </li>
                         </ul>
+                        <p className="text-xs text-muted-foreground mt-3">
+                          Don't take our word for it —{" "}
+                          <a
+                            href="https://github.com/psrob9/rob-s-money-lab"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-lab-teal hover:underline"
+                          >
+                            view the source code
+                          </a>.
+                        </p>
                       </div>
                     </div>
                   </CollapsibleContent>

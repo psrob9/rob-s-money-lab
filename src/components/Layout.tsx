@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, FlaskConical, MessageSquare } from "lucide-react";
+import { Menu, X, FlaskConical, MessageSquare, Github } from "lucide-react";
 import { FeedbackModal } from "@/components/FeedbackModal";
 
 const navLinks = [
@@ -133,6 +133,16 @@ export function Layout({ children }: LayoutProps) {
                 <MessageSquare size={14} />
                 Share feedback
               </button>
+              <a
+                href="https://github.com/psrob9/rob-s-money-lab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 hover:text-lab-navy transition-colors"
+                aria-label="View source on GitHub"
+              >
+                <Github size={14} />
+                <span className="hidden sm:inline">Source</span>
+              </a>
             </div>
             <p>© {currentYear}</p>
           </div>

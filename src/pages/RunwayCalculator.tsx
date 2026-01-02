@@ -954,6 +954,17 @@ const RunwayCalculator = () => {
                         Learn more about our approach →
                       </Link>
                     </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Don't take our word for it —{" "}
+                      <a
+                        href="https://github.com/psrob9/rob-s-money-lab"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-lab-teal hover:underline"
+                      >
+                        view the source code
+                      </a>.
+                    </p>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
