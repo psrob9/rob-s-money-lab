@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker, Info, ArrowRight, Download, Lightbulb, Lock } from "lucide-react";
+import { Upload, FileText, X, Check, AlertCircle, Loader2, Calendar, DollarSign, TrendingUp, Sparkles, ChevronDown, ChevronUp, Filter, SlidersHorizontal, Eye, EyeOff, Beaker, Info, ArrowRight, Download, Lightbulb, Lock, MessageSquare, RefreshCw } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -28,6 +28,7 @@ import {
 import { SAMPLE_PERSONA, getSampleTransactionsForRecurring } from "@/utils/sampleData";
 import { useTransactionContext } from "@/contexts/TransactionContext";
 import { EmailSignup } from "@/components/EmailSignup";
+import { FeedbackModal } from "@/components/FeedbackModal";
 
 interface UploadedFile {
   file: File;
@@ -1206,22 +1207,73 @@ const TrueMonthlyCost = () => {
                 </Card>
               )}
 
+              {/* What's Next */}
+              <Card className="mt-8">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-lab-navy">What's Next?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <Button
+                      variant="outline"
+                      className="flex flex-col items-center gap-1 h-auto py-3 px-3"
+                      onClick={handleReset}
+                    >
+                      <RefreshCw size={18} className="text-lab-sage" />
+                      <span className="text-xs font-medium">Start Over</span>
+                      <span className="text-[10px] text-muted-foreground">Analyze new files</span>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="flex flex-col items-center gap-1 h-auto py-3 px-3"
+                      asChild
+                    >
+                      <Link to="/tools/money-snapshot">
+                        <span className="text-lg">📊</span>
+                        <span className="text-xs font-medium">Money Snapshot</span>
+                        <span className="text-[10px] text-muted-foreground">See spending breakdown</span>
+                      </Link>
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <Button
+                      variant="outline"
+                      className="flex flex-col items-center gap-1 h-auto py-3 px-3"
+                      asChild
+                    >
+                      <Link to="/tools/runway-calculator">
+                        <span className="text-lg">🛡️</span>
+                        <span className="text-xs font-medium">Layoff Runway</span>
+                        <span className="text-[10px] text-muted-foreground">How long will savings last?</span>
+                      </Link>
+                    </Button>
+
+                    <FeedbackModal
+                      context="true-monthly-cost"
+                      variant="tool-feedback"
+                      trigger={
+                        <Button
+                          variant="outline"
+                          className="flex flex-col items-center gap-1 h-auto py-3 px-3 w-full"
+                        >
+                          <MessageSquare size={18} className="text-lab-sage" />
+                          <span className="text-xs font-medium">Share Feedback</span>
+                          <span className="text-[10px] text-muted-foreground">Help us improve</span>
+                        </Button>
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Email Signup */}
               <div className="mt-8 border-t border-border pt-8">
-                <EmailSignup 
-                  heading="Want to know when I build more tools?" 
+                <EmailSignup
+                  heading="Want to know when I build more tools?"
                   variant="compact"
                 />
-              </div>
-
-              {/* Start Over */}
-              <div className="mt-8 text-center">
-                <Button
-                  variant="outline"
-                  onClick={handleReset}
-                >
-                  Start Over with New Files
-                </Button>
               </div>
             </>
           )}

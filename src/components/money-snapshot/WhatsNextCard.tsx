@@ -19,7 +19,7 @@ export const WhatsNextCard = ({
         <CardTitle className="text-lg text-lab-navy">What's Next?</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <Button
             variant="outline"
             className="flex flex-col items-center gap-1 h-auto py-3 px-3"
@@ -30,19 +30,7 @@ export const WhatsNextCard = ({
             <span className="text-xs font-medium">Download CSV</span>
             <span className="text-[10px] text-muted-foreground">Export categorized data</span>
           </Button>
-          
-          <Button
-            variant="outline"
-            className="flex flex-col items-center gap-1 h-auto py-3 px-3"
-            asChild
-          >
-            <Link to="/tools/true-monthly-cost">
-              <ArrowRight size={18} className="text-lab-teal" />
-              <span className="text-xs font-medium">True Monthly Cost</span>
-              <span className="text-[10px] text-muted-foreground">Find recurring costs</span>
-            </Link>
-          </Button>
-          
+
           <Button
             variant="outline"
             className="flex flex-col items-center gap-1 h-auto py-3 px-3"
@@ -52,18 +40,48 @@ export const WhatsNextCard = ({
             <span className="text-xs font-medium">Start Over</span>
             <span className="text-[10px] text-muted-foreground">Analyze new files</span>
           </Button>
-          
-          <FeedbackModal 
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground font-medium">Try another tool:</p>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              className="flex flex-col items-center gap-1 h-auto py-3 px-3"
+              asChild
+            >
+              <Link to="/tools/true-monthly-cost">
+                <span className="text-lg">💰</span>
+                <span className="text-xs font-medium">True Monthly Cost</span>
+                <span className="text-[10px] text-muted-foreground">Find recurring costs</span>
+              </Link>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="flex flex-col items-center gap-1 h-auto py-3 px-3"
+              asChild
+            >
+              <Link to="/tools/runway-calculator">
+                <span className="text-lg">🛡️</span>
+                <span className="text-xs font-medium">Layoff Runway</span>
+                <span className="text-[10px] text-muted-foreground">How long will savings last?</span>
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <FeedbackModal
             context="money-snapshot"
             variant="tool-feedback"
             trigger={
               <Button
                 variant="outline"
-                className="flex flex-col items-center gap-1 h-auto py-3 px-3"
+                className="w-full flex items-center justify-center gap-2 h-auto py-2"
               >
-                <MessageSquare size={18} className="text-lab-teal" />
+                <MessageSquare size={16} className="text-lab-teal" />
                 <span className="text-xs font-medium">Share Feedback</span>
-                <span className="text-[10px] text-muted-foreground">Help us improve</span>
               </Button>
             }
           />
