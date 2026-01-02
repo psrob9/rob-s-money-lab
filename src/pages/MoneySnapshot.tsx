@@ -2,10 +2,11 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTransactionContext } from "@/contexts/TransactionContext";
 import { Layout } from "@/components/Layout";
-import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings, CheckCircle2, Beaker } from "lucide-react";
+import { Upload, FileText, Lock, ChevronDown, ChevronUp, RefreshCw, Download, TrendingUp, TrendingDown, DollarSign, Calendar, ChevronRight, Sparkles, Loader2, Check, AlertCircle, Plus, X, Settings, CheckCircle2, Beaker, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -784,213 +785,215 @@ const MoneySnapshot = () => {
 
   return (
     <Layout>
-      <section className="py-12 sm:py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h1 className="text-3xl sm:text-4xl font-bold text-lab-navy mb-3">
-              Money Snapshot
-            </h1>
-            <p className="text-xl text-lab-teal font-semibold mb-4">
-              See where your money actually goes in 60 seconds
-            </p>
-            <p className="text-lab-warm-gray">
-              Upload bank statement CSVs from multiple accounts. Your transactions are analyzed in your browser. Only spending summaries are shared if you opt into AI insights.
-            </p>
-          </div>
+      {/* Hero Section */}
+      <section className="py-16 sm:py-24">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl text-center">
+          <div className="text-4xl mb-4">📊</div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-lab-navy mb-4">
+            Money Snapshot
+          </h1>
+          <p className="text-xl text-lab-warm-gray mb-2">
+            Where does your money actually go?
+          </p>
+          <p className="text-xl text-lab-warm-gray mb-6">
+            Find out in 60 seconds.
+          </p>
+          <p className="text-lab-warm-gray mb-8">
+            No account needed. Your files never leave your browser.
+          </p>
 
+          {step === "upload" && (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                onClick={() => document.getElementById('hero-file-input')?.click()}
+                className="bg-lab-teal hover:bg-lab-teal/90 text-white px-8"
+                size="lg"
+              >
+                Upload CSV
+              </Button>
+              <input
+                id="hero-file-input"
+                type="file"
+                accept=".csv"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleLoadSampleData}
+              >
+                <Beaker size={18} className="mr-2" />
+                Try Sample Data
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Who This Is For (Collapsible) */}
+      {step === "upload" && (
+        <section className="pb-8">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
+            <Accordion type="single" collapsible>
+              <AccordionItem value="who-for" className="border rounded-xl bg-card shadow-sm">
+                <AccordionTrigger className="px-6 hover:no-underline">
+                  <span className="text-lab-navy font-medium">Who is this for?</span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="font-medium text-lab-navy mb-3">This tool is for you if:</p>
+                      <ul className="space-y-2">
+                        <li className="flex items-start gap-2 text-sm text-lab-warm-gray">
+                          <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                          You have bank statements but no clear picture of spending
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-lab-warm-gray">
+                          <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                          You want quick insights without setting up a budget system
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-lab-warm-gray">
+                          <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                          You're curious where your money actually goes
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium text-lab-navy mb-3">This tool may not be right if:</p>
+                      <ul className="space-y-2">
+                        <li className="flex items-start gap-2 text-sm text-lab-warm-gray">
+                          <X className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                          You already use YNAB or Monarch and track everything
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-lab-warm-gray">
+                          <X className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                          You need ongoing budget tracking (this is one-time analysis)
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* Privacy Section */}
+            <Accordion type="single" collapsible className="mt-4">
+              <AccordionItem value="privacy" className="border rounded-xl bg-card shadow-sm">
+                <AccordionTrigger className="px-6 hover:no-underline">
+                  <span className="flex items-center gap-2 text-lab-navy font-medium">
+                    <Shield className="h-4 w-4" />
+                    Privacy
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <p className="text-sm text-lab-warm-gray mb-4">Your privacy is protected:</p>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                      Your CSV files are processed entirely in your browser
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                      Transaction details never leave your device
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                      AI insights are opt-in — only category totals are shared, never transactions
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                      No account required, no tracking
+                    </li>
+                  </ul>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    This tool is part of Rob's Money Lab — privacy-first financial tools.{" "}
+                    <Link to="/about#privacy" className="text-lab-teal hover:underline">
+                      Learn more about our approach →
+                    </Link>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Don't take our word for it —{" "}
+                    <a
+                      href="https://github.com/psrob9/rob-s-money-lab"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lab-teal hover:underline"
+                    >
+                      view the source code
+                    </a>.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </section>
+      )}
+
+      {/* Upload Section */}
+      <section className="pb-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
           {/* Step 1: Upload */}
           {step === "upload" && (
-            <div className="space-y-6">
-              {/* Value proposition */}
-              <div className="space-y-3 mb-2">
-                <p className="text-sm text-lab-warm-gray text-center">
-                  Upload your bank statement and discover:
-                </p>
-                <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-6 text-sm">
-                  <div className="flex items-center gap-2 justify-center">
-                    <CheckCircle2 size={16} className="text-lab-sage" />
-                    <span className="text-lab-navy">Your top spending categories</span>
-                  </div>
-                  <div className="flex items-center gap-2 justify-center">
-                    <CheckCircle2 size={16} className="text-lab-sage" />
-                    <span className="text-lab-navy">Hidden patterns in your habits</span>
-                  </div>
-                  <div className="flex items-center gap-2 justify-center">
-                    <CheckCircle2 size={16} className="text-lab-sage" />
-                    <span className="text-lab-navy">Quick wins to optimize</span>
-                  </div>
+            <Card className="p-6">
+              <div className="space-y-6">
+                {/* Upload Zone */}
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
+                    isDragging
+                      ? "border-lab-teal bg-lab-teal/5"
+                      : "border-border hover:border-lab-teal/50 hover:bg-secondary/30"
+                  }`}
+                >
+                  <input
+                    type="file"
+                    accept=".csv"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <Upload
+                    size={48}
+                    className={`mx-auto mb-4 transition-colors ${
+                      isDragging ? "text-lab-teal" : "text-muted-foreground"
+                    }`}
+                  />
+                  <p className="text-lg font-medium text-lab-navy mb-2">
+                    Drop your CSV files here or click to browse
+                  </p>
+                  <p className="text-sm text-lab-warm-gray">
+                    Upload from multiple bank accounts and credit cards at once.
+                  </p>
                 </div>
-              </div>
 
-              {/* Upload Zone */}
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
-                  isDragging
-                    ? "border-lab-teal bg-lab-teal/5"
-                    : "border-border hover:border-lab-teal/50 hover:bg-secondary/30"
-                }`}
-              >
-                <input
-                  type="file"
-                  accept=".csv"
-                  multiple
-                  onChange={handleFileSelect}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                <Upload 
-                  size={48} 
-                  className={`mx-auto mb-4 transition-colors ${
-                    isDragging ? "text-lab-teal" : "text-muted-foreground"
-                  }`} 
-                />
-                <p className="text-lg font-medium text-lab-navy mb-2">
-                  Drop your CSV files here or click to browse
-                </p>
-                <p className="text-sm text-lab-warm-gray">
-                  Upload from multiple bank accounts and credit cards at once.
-                </p>
-              </div>
-
-              {/* Sample Data Option */}
-              <div className="flex items-center justify-center gap-4">
-                <div className="h-px bg-border flex-1" />
-                <span className="text-sm text-muted-foreground">or</span>
-                <div className="h-px bg-border flex-1" />
-              </div>
-              
-              <button
-                onClick={handleLoadSampleData}
-                className="w-full p-4 rounded-lg border-2 border-dashed border-lab-amber/30 bg-lab-amber/5 hover:bg-lab-amber/10 hover:border-lab-amber/50 transition-colors text-center group"
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Beaker size={18} className="text-lab-amber" />
-                  <span className="font-medium text-lab-navy">Try with sample data</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  See how it works without uploading anything personal
-                </p>
-              </button>
-
-              {/* Privacy Note with Expandable Details */}
-              <div className="bg-lab-teal/5 rounded-lg border border-lab-teal/20">
+                {/* Bank Export Instructions */}
                 <Collapsible>
-                  <div className="flex items-start gap-3 p-4">
-                    <Lock size={20} className="text-lab-teal mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <Link 
-                          to="/about#privacy" 
-                          className="font-medium text-lab-navy hover:text-lab-teal transition-colors"
-                        >
-                          Privacy first
-                        </Link>
-                        <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-lab-teal transition-colors">
-                          <span>Details</span>
-                          <ChevronDown size={14} className="transition-transform [[data-state=open]_&]:rotate-180" />
-                        </CollapsibleTrigger>
-                      </div>
-                      <p className="text-sm text-lab-warm-gray mt-1">
-                        Your files are processed entirely in your browser. Nothing is uploaded to any server.
-                      </p>
-                    </div>
-                  </div>
-                  <CollapsibleContent>
-                    <div className="px-4 pb-4 pt-0 ml-8">
-                      <div className="p-3 bg-background/50 rounded-lg border border-border/50">
-                        <p className="text-xs font-medium text-lab-navy mb-2">How Your Data is Handled</p>
-                        <ul className="text-xs text-lab-warm-gray space-y-1.5">
-                          <li className="flex items-start gap-2">
-                            <span className="text-lab-teal">•</span>
-                            <span>Your CSV files are processed entirely in your browser — transactions never touch a server</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-lab-teal">•</span>
-                            <span>Individual transaction details never leave your device — not the descriptions, not the amounts, nothing</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-lab-teal">•</span>
-                            <span>AI insights are opt-in — if you choose to use them, only category totals and percentages are sent to Claude (Anthropic's AI), never your actual transactions</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-lab-teal">•</span>
-                            <span>No accounts, no tracking, no data storage — when you close the tab, it's gone</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-lab-teal">•</span>
-                            <span>Category preferences are saved locally — if you teach the tool a new category, that's stored in your browser only</span>
-                          </li>
-                        </ul>
-                        <p className="text-xs text-muted-foreground mt-3">
-                          Don't take our word for it —{" "}
-                          <a
-                            href="https://github.com/psrob9/rob-s-money-lab"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-lab-teal hover:underline"
-                          >
-                            view the source code
-                          </a>.
-                        </p>
-                      </div>
-                    </div>
+                  <CollapsibleTrigger className="flex items-center gap-2 text-sm text-lab-teal hover:underline">
+                    <ChevronDown size={16} className="transition-transform [[data-state=open]_&]:rotate-180" />
+                    How do I get a CSV from my bank?
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-3 p-4 bg-secondary/30 rounded-lg">
+                    <p className="text-sm text-lab-warm-gray mb-3">
+                      Most banks let you export transactions as CSV. Here's how:
+                    </p>
+                    <ul className="text-sm text-lab-warm-gray space-y-2">
+                      <li><strong>Chase:</strong> Statements → Download → CSV</li>
+                      <li><strong>Bank of America:</strong> Activity → Export → Spreadsheet</li>
+                      <li><strong>Wells Fargo:</strong> Download Account Activity → CSV</li>
+                      <li><strong>Capital One:</strong> Download Transactions → CSV</li>
+                      <li><strong>Discover:</strong> Statements → Export → Excel/CSV</li>
+                    </ul>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Can't find the option? Search "[your bank] export CSV" for specific instructions.
+                    </p>
                   </CollapsibleContent>
                 </Collapsible>
               </div>
-
-              {/* Bank Export Instructions */}
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-sm text-lab-teal hover:underline">
-                  <ChevronDown size={16} className="transition-transform [[data-state=open]_&]:rotate-180" />
-                  How do I get a CSV from my bank?
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 p-4 bg-secondary/50 rounded-lg">
-                  <p className="text-sm text-lab-warm-gray mb-3">
-                    Most banks let you export transactions as CSV from their website:
-                  </p>
-                  <ul className="text-sm text-lab-warm-gray space-y-2">
-                    <li><span className="font-medium text-lab-navy">Chase:</span> Accounts → Download account activity → CSV</li>
-                    <li><span className="font-medium text-lab-navy">Bank of America:</span> Statements & Documents → Download → Spreadsheet (CSV)</li>
-                    <li><span className="font-medium text-lab-navy">Capital One:</span> Account → Download Transactions → CSV</li>
-                    <li><span className="font-medium text-lab-navy">Wells Fargo:</span> Account → Download → Comma Delimited</li>
-                    <li><span className="font-medium text-lab-navy">Other banks:</span> Look for 'Export', 'Download', or 'Statements' in your online banking</li>
-                  </ul>
-                </CollapsibleContent>
-              </Collapsible>
-
-              {/* Format Help */}
-              <Collapsible open={formatHelpOpen} onOpenChange={setFormatHelpOpen}>
-                <CollapsibleTrigger className="flex items-center gap-2 text-sm text-lab-teal hover:underline">
-                  {formatHelpOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  What format do I need?
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 p-4 bg-secondary/50 rounded-lg">
-                  <p className="text-sm text-lab-warm-gray mb-3">
-                    We look for these common columns in your CSV:
-                  </p>
-                  <ul className="text-sm text-lab-warm-gray space-y-2">
-                    <li className="flex items-start gap-2">
-                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Date</span>
-                      <span>When the transaction happened</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Description</span>
-                      <span>What/who the transaction was with</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Amount</span>
-                      <span>The dollar amount (negative = expense)</span>
-                    </li>
-                  </ul>
-                  <p className="text-sm text-lab-warm-gray mt-3">
-                    Most bank exports work automatically. We handle separate debit/credit columns too.
-                  </p>
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
+            </Card>
           )}
 
           {/* Step 2: Managing Files */}
