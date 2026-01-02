@@ -14,21 +14,57 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 |------|--------|-------|
 | Money Snapshot | 🟢 Live | Full feature set, sample data demo |
 | True Monthly Cost Calculator | 🟢 Live | Algorithm tuned, UX polished |
+| Emergency Fund Runway Calculator | 🟡 PRD Complete | Ready to build |
 | Portfolio Site | 🟢 Live | Homepage, Tools, About (with photo), Feedback system |
 
 **Live URL:** https://robsmoneylab.lovable.app
 
 ---
 
+## Launch Analytics (Day 1-2)
+
+| Metric | Value | Assessment |
+|--------|-------|------------|
+| **Visitors** | 54 | From ~5 channels in 1 day |
+| **Pageviews** | 138 | |
+| **Views/Visit** | 2.56 | People clicking around, not bouncing |
+| **Visit Duration** | 5m 55s | **Excellent** — people actually engaging |
+| **Bounce Rate** | 56% | Normal (industry average 40-60%) |
+
+### Traffic Sources
+| Source | Visitors | Insight |
+|--------|----------|---------|
+| **Direct** | 44 | Likely IG/Threads/Reddit app (strip referrers) |
+| **Reddit** | 7 | Only credited from Reddit web |
+| **Google** | 2 | Organic discovery on Day 1 |
+
+### Page Funnel
+| Page | Visitors | Conversion |
+|------|----------|------------|
+| `/` | 52 | Landing page |
+| `/tools` | 11 | **21% clicked through** |
+| `/tools/money-snapshot` | 11 | Core tool explored |
+| `/tools/true-monthly-cost` | 8 | Secondary tool explored |
+| `/about` | 7 | People wanted to know who you are |
+
+**Key Insight:** 5m 55s duration + 21% tool exploration = Right audience at low volume, not wrong audience at high volume.
+
+---
+
 ## Soft Launch Status
 
-| Platform | Status | Notes |
-|----------|--------|-------|
-| r/vibecoding | ✅ Posted | Process/workflow focus |
-| r/ClaudeAI | ✅ Posted | Redemption arc |
-| r/ClaudeCode | ✅ Posted | Technical patterns |
-| r/personalfinance | ⏳ Awaiting mod approval | Messaged mods |
-| r/YNAB | ⏳ Awaiting mod response | Previous post pending |
+| Platform | Status | Reception | Notes |
+|----------|--------|-----------|-------|
+| r/vibecoding | ✅ Posted | Neutral/curious | Interest in TDD approach |
+| r/ClaudeAI | ❌ Deleted | Hostile | Data privacy concerns, "make this open source or gtfo" |
+| r/ClaudeCode | ✅ Posted | Technical patterns | |
+| r/SideProject | ✅ Posted | | |
+| r/personalfinance | ⏳ Pending | Awaiting mod approval | Messaged mods |
+| r/YNAB | ⏳ Pending | Awaiting mod response | Previous post pending |
+| Instagram | ✅ Posted | Carousel content | |
+| Threads | ✅ Posted | | |
+
+**Key Lesson:** r/ClaudeAI is NOT the target audience. They're builders/skeptics, not users looking for tools.
 
 ---
 
@@ -104,16 +140,47 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 - [x] Context tracking (page/tool source)
 
 ### Documentation ✅
-- [x] PRD.md (updated v2.0)
+- [x] PRD.md (v3.0 with Runway Calculator, Analysis Framework, Anti-Slop)
 - [x] PROJECT_STATUS.md
 - [x] LOVABLE_KNOWLEDGE.md
 - [x] PERSONA_ANALYSIS.md (UX friction analysis by persona)
+- [x] CLAUDE.md
+
+### Market Research ✅
+- [x] ADHD/neurospicy community pain points documented
+- [x] Three user archetypes identified (System Builders, Overwhelmed Avoiders, Natural Frugals)
+- [x] "ADHD tax" quantified ($1,000+/year from forgotten subscriptions, late fees)
+- [x] Competitive landscape analyzed (Monarch, Copilot, Actual Budget, Lunch Money)
+- [x] Reddit validation posts drafted and submitted
+- [x] Emergency Fund Runway Calculator PRD section complete
+- [x] UI Flow Document v2.0 created (12,000+ words with validated scenarios)
+
+---
+
+## What's In Progress
+
+### Active Validation
+| Activity | Status | Notes |
+|----------|--------|-------|
+| r/personalfinance post | 🟡 Pending mod approval | Using authentic personal situation |
+| r/YNAB post | 🟡 Pending mod response | Asking about runway calculations |
+| Response monitoring | 🔄 Ongoing | Watching for patterns in feedback |
+| Formspree feedback | 🔄 Monitoring | Check for submissions |
+
+### Emergency Fund Runway Calculator
+| Task | Status | Notes |
+|------|--------|-------|
+| PRD Complete | ✅ Done | Section added to main PRD |
+| UI Flow Document | ✅ Done | v2.0 with validated scenarios |
+| Build in Lovable | 🔴 Not Started | Next major development task |
+| Sample scenarios | ✅ Ready | 3 scenarios from Reddit validation |
 
 ---
 
 ## What's Not Started
 
 ### High Priority (Next Sprint)
+- [ ] Build Emergency Fund Runway Calculator
 - [ ] Email capture / newsletter signup
 - [ ] Meta tags / Open Graph for social sharing
 - [ ] Monitor Reddit feedback and iterate
@@ -132,6 +199,7 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 - [ ] Budget Psychology Assessment tool
 - [ ] Custom domain (defer until traction)
 - [ ] SEO optimization (defer until traction)
+- [ ] "Hobby Graveyard" detector (validated ADHD pain point)
 
 ---
 
@@ -188,6 +256,16 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 
 **Trigger to reconsider:** Multiple user feedback reports about difficulty finding sections.
 
+### Dark Mode
+
+**Idea:** Add dark mode toggle for users who prefer it, especially for late-night financial reviews.
+
+**Decision:** Deferred (Jan 2, 2026)
+
+**Reasoning:** Nice-to-have, not essential for launch. Wait for user feedback requesting it.
+
+**Trigger to reconsider:** Multiple user requests, or if adding other visual customization features.
+
 ---
 
 ## Prompts Completed
@@ -242,12 +320,101 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 
 ---
 
+## Claude Code Skills & Workflows
+
+### Validated Techniques
+| Technique | Why It Works |
+|-----------|--------------|
+| **Spec-Driven Development** | "Slows down" Claude to think 4x on requirements; enables granular review |
+| **Git Worktrees** | Safe parallel development and A/B experiments without risking main branch |
+| **Playwright E2E Testing** | Validates webapp behavior automatically |
+| **Pre-commit Linting Hooks** | Catches quality issues before commits |
+| **Tab Completion / Prompt Prediction** | Claude Code maintains context via CLAUDE.md and skill files |
+
+### Skills Stack
+
+**Tier 1: Install Immediately**
+```bash
+# Superpowers (complete dev workflow by obra)
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
+**Tier 2: Custom Skills (Created/To Create)**
+```
+~/.claude/skills/
+├── ynab-insights/SKILL.md      # Data analysis rules ✅
+├── anti-slop/SKILL.md          # Voice + presentation ✅
+├── ship-not-perfect/SKILL.md   # Customer acquisition focus ✅
+└── reddit-content/SKILL.md     # Content framework (to create)
+```
+
+**Tier 3: Project-Local Skills**
+```
+~/robs-money-lab/.claude/skills/
+├── demo-data/SKILL.md          # Synthetic dataset generation
+└── deployment/SKILL.md         # GitHub Pages workflow
+```
+
+### Superpowers Workflow System
+1. **brainstorming** — Asks clarifying questions before coding
+2. **using-git-worktrees** — Creates isolated worktree for safe changes
+3. **writing-plans** — Detailed plan with exact file paths, complete code
+4. **test-driven-development** — RED-GREEN-REFACTOR workflow
+5. **requesting-code-review** — Reviews each task before moving on
+6. **finishing-a-development-branch** — Handles merge/PR/keep/discard
+
+### Key Resources
+- **Superpowers**: https://github.com/obra/superpowers
+- **Awesome Claude Skills**: https://github.com/ComposioHQ/awesome-claude-skills
+- **Skills Directory**: https://www.skillsdirectory.org
+
+---
+
+## Idea Mining Resources
+
+### Subreddits for Problem Discovery
+
+**"I wish this existed" communities:**
+- r/SomebodyMakeThis (81K members)
+- r/AppIdeas
+- r/Lightbulb
+
+**Where pain points surface organically:**
+- r/entrepreneur, r/startups — Complaint threads
+- r/SaaS — Feature requests, "why doesn't X do Y"
+- r/YNAB — Product-adjacent frustrations
+- r/QuantifiedSelf — "I have data, what does it mean?"
+- r/Biohackers — Health metrics correlation
+
+### Search Queries That Surface Gold
+- `"I wish there was"`
+- `"alternative to [tool]"`
+- `"biggest problem with"`
+- `"I'd pay for"`
+- `"why is [tool] so bad at"`
+
+### Monitoring Tools
+| Tool | Cost | Best For |
+|------|------|----------|
+| **F5Bot** | Free | Basic keyword alerts (Reddit, HN, Lobsters) |
+| **GummySearch** | $29-49/mo | Deep Reddit research |
+| **Syften** | Paid | Multi-platform monitoring |
+
+### Privacy Solution: Synthetic Data
+Created "Jamie Chen" — a fictional persona with realistic spending patterns for demos:
+- 32-year-old software developer in Austin
+- Realistic behavioral signatures
+- Demo: https://psrob9.github.io/ynab-insights-demo/
+
+---
+
 ## Git Workflow
 
 **Safe push command:** `git sync` (alias for `git pull --rebase && git push`)
 
 **Setup:**
-```
+```bash
 git config --global alias.sync "!git pull --rebase && git push"
 ```
 
@@ -258,9 +425,48 @@ git config --global alias.sync "!git pull --rebase && git push"
 
 ---
 
+## Key Learnings (This Sprint)
+
+### What Worked
+- Authentic Reddit engagement using real personal situation
+- Privacy-first architecture resonates with skeptical users
+- Two-tool portfolio approach provides multiple entry points
+- Formspree as quick email capture solution
+- Hybrid workflow (Lovable for UI, Claude Code for logic)
+- Sample data demos for trust building
+
+### What Didn't Work
+- r/ClaudeAI post deleted/hostile reception
+- ynab-insights-demo got "roasted" for asking users to upload data
+- Previous projects (YBW, Budget Psychology) had traffic but no engagement
+
+### Key Insights
+1. **Sample data demos are essential** — Skeptical Redditors won't upload real data first
+2. **One-time value ≠ recurring revenue** — Portfolio approach better than subscription
+3. **ADHD tax is quantifiable** — $1,000+/year gives concrete value proposition
+4. **"What could I cut?" > "What did I spend?"** — Rob's 2D model is more actionable
+5. **Proactive > Retrospective** — Runway Calculator fills gap competitors don't address
+6. **5m 55s duration = right audience** — Quality over quantity
+
+---
+
+## Metrics to Track
+
+| Metric | Current | Target | Notes |
+|--------|---------|--------|-------|
+| Site visitors | 54 | 100/week | Day 1 baseline |
+| Visit duration | 5m 55s | >3 min | Day 1 baseline (excellent) |
+| Tool exploration rate | 21% | >20% | Day 1 baseline (good) |
+| Reddit post engagement | Unknown | 10+ comments | Validation indicator |
+| Email signups | 0 | 50 | Via Formspree |
+| Feedback submissions | 0 | 5+ | Via Formspree |
+
+---
+
 ## Links & Resources
 
 - **Live Site:** https://robsmoneylab.lovable.app
+- **YNAB Insights Demo:** https://psrob9.github.io/ynab-insights-demo/
 - **GitHub:** https://github.com/psrob9/rob-s-money-lab
 - **Formspree:** https://formspree.io/f/mzdzdgga
 - **Supabase Dashboard:** [your project URL]
@@ -272,9 +478,22 @@ git config --global alias.sync "!git pull --rebase && git push"
 1. **Monitor Reddit** — Check engagement, respond to comments
 2. **Check Formspree** — Review any feedback submissions
 3. **Follow up on mods** — r/personalfinance, r/YNAB responses
-4. **Iterate based on feedback** — Fix issues, add requested features
-5. **Email capture** — Add newsletter signup if feedback is positive
+4. **Install Superpowers** — Plugin for Claude Code workflow
+5. **Create skills** — `ship-not-perfect`, `reddit-content`
+6. **Build Runway Calculator** — Next major development task
+7. **Check Google Search Console** — Organic queries bringing traffic
 
 ---
 
-*Status updated: January 2, 2026 2:20 AM*
+## Questions / Decisions Pending
+
+1. **Build order** — Runway Calculator next, or iterate on existing tools first?
+2. **Analytics** — Add Plausible/Simple Analytics for privacy-friendly tracking?
+3. **Custom domain** — Ready to connect robsmoneylab.com?
+4. **YNAB Insights approach** — Browser extension vs. current upload model?
+5. **Monetization** — When/how to introduce paid features?
+6. **Open source timing** — After validation, or now for credibility?
+
+---
+
+*Status updated: January 2, 2026 1:17 PM*
