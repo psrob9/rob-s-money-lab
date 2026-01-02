@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { ToolCard } from "@/components/ToolCard";
+import { EmailSignup } from "@/components/EmailSignup";
 import { ArrowRight } from "lucide-react";
 
 const Index = () => {
@@ -58,6 +59,13 @@ const Index = () => {
               <ArrowRight size={18} className="ml-1" />
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Email Signup Section */}
+      <section className="py-12 bg-secondary/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-xl">
+          <EmailSignup />
         </div>
       </section>
 
