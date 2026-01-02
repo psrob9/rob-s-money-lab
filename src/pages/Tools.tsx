@@ -33,6 +33,13 @@ const Tools = () => {
               href="/tools/true-monthly-cost"
             />
             
+            <ToolCard
+              title="Layoff Runway Calculator"
+              description="See how long your savings will last if you face a layoff. Plan ahead, not in panic."
+              href="/tools/runway-calculator"
+              badge="New"
+            />
+            
             {/* Got an Idea card */}
             <button
               onClick={() => setFeedbackOpen(true)}
