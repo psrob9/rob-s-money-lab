@@ -23,6 +23,7 @@ dist-ssr
 .idea
 .claude/
 .DS_Store
+ignored/
 *.suo
 *.ntvs*
 *.njsproj
