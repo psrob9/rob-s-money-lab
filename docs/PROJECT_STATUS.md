@@ -1,23 +1,24 @@
 # Rob's Money Lab - Project Status
 
-**Last Updated:** January 2, 2026  
-**Sprint:** Soft Launch  
+**Last Updated:** January 2, 2026
+**Sprint:** Soft Launch
 **Overall Status:** 🟢 Live & Launched
 
 ---
 
 ## Quick Summary
 
-Two tools live and fully functional. Published to robsmoneylab.lovable.app. Security hardened. Feedback system in place. Favicon and About page photo complete. Reddit soft launch in progress.
+Three tools live and fully functional. Published to robsmoneylab.lovable.app. Security hardened. Feedback system in place. Repo is now public with MIT license.
 
 | Tool | Status | Notes |
 |------|--------|-------|
 | Money Snapshot | 🟢 Live | Full feature set, sample data demo |
 | True Monthly Cost Calculator | 🟢 Live | Algorithm tuned, UX polished |
-| Emergency Fund Runway Calculator | 🟡 PRD Complete | Ready to build |
+| Layoff Runway Calculator | 🟢 Live | 3 sample scenarios, editable UI benefits |
 | Portfolio Site | 🟢 Live | Homepage, Tools, About (with photo), Feedback system |
 
 **Live URL:** https://robsmoneylab.lovable.app
+**GitHub:** https://github.com/psrob9/rob-s-money-lab (public, MIT license)
 
 ---
 
@@ -82,6 +83,8 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 - [x] Favicon (beaker + dollar sign)
 - [x] About page photo
 - [x] Git alias `git sync` configured for safe pushing
+- [x] GitHub repo made public with README and MIT LICENSE
+- [x] GitHub links in footer and privacy sections
 
 ### Security ✅
 - [x] Edge Function rate limiting (10 requests/IP/hour)
@@ -129,6 +132,22 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 - [x] What to Do With This section (above recurring costs table)
 - [x] Consistent terminology (recurring costs)
 - [x] Privacy section with expandable details
+- [x] What's Next section with links to other tools
+
+### Layoff Runway Calculator ✅
+- [x] Input form: savings, expenses (simple or itemized), income sources
+- [x] Unemployment benefits toggle with editable amount
+- [x] UI duration note (~26 weeks warning)
+- [x] Buffer options (none, 10%, 20%)
+- [x] Scenario results (current lifestyle, bare bones, with UI)
+- [x] Status indicators (survival/urgent/moderate/strong/positive)
+- [x] What-if toggles (UI, cut discretionary, severance, gig income)
+- [x] Detailed breakdown table
+- [x] Action recommendations based on runway
+- [x] 3 sample scenarios (Tight Squeeze, Tech Layoff, Single Income Family)
+- [x] Privacy accordion (moved upfront for trust)
+- [x] What's Next section with links to other tools
+- [x] "Who This Is For" collapsible section
 
 ### Feedback System ✅
 - [x] Formspree integration (https://formspree.io/f/mzdzdgga)
@@ -167,20 +186,21 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 | Response monitoring | 🔄 Ongoing | Watching for patterns in feedback |
 | Formspree feedback | 🔄 Monitoring | Check for submissions |
 
-### Emergency Fund Runway Calculator
+### Layoff Runway Calculator
 | Task | Status | Notes |
 |------|--------|-------|
 | PRD Complete | ✅ Done | Section added to main PRD |
 | UI Flow Document | ✅ Done | v2.0 with validated scenarios |
-| Build in Lovable | 🔴 Not Started | Next major development task |
-| Sample scenarios | ✅ Ready | 3 scenarios from Reddit validation |
+| Build in Lovable | ✅ Done | Built by Lovable Jan 2, 2026 |
+| Sample scenarios | ✅ Done | 3 scenarios (Tight Squeeze, Tech Layoff, Single Income Family) |
+| Consistency polish | ✅ Done | Privacy moved up, editable UI benefits, duration note |
+| Cross-linking | ✅ Done | Added to all What's Next sections |
 
 ---
 
 ## What's Not Started
 
 ### High Priority (Next Sprint)
-- [ ] Build Emergency Fund Runway Calculator
 - [ ] Email capture / newsletter signup
 - [ ] Meta tags / Open Graph for social sharing
 - [ ] Monitor Reddit feedback and iterate
@@ -190,7 +210,6 @@ Two tools live and fully functional. Published to robsmoneylab.lovable.app. Secu
 - [ ] Show more "Needs Review" transactions
 - [ ] Manual "add custom rule" without clicking transaction
 - [ ] Cross-tool data sharing (use Money Snapshot data in True Monthly Cost)
-- [ ] GitHub link in footer (for skeptical users)
 
 ### Low Priority / Future
 - [ ] Community category database (crowdsourced)
@@ -478,22 +497,21 @@ git config --global alias.sync "!git pull --rebase && git push"
 1. **Monitor Reddit** — Check engagement, respond to comments
 2. **Check Formspree** — Review any feedback submissions
 3. **Follow up on mods** — r/personalfinance, r/YNAB responses
-4. **Install Superpowers** — Plugin for Claude Code workflow
-5. **Create skills** — `ship-not-perfect`, `reddit-content`
-6. **Build Runway Calculator** — Next major development task
-7. **Check Google Search Console** — Organic queries bringing traffic
+4. **Announce Runway Calculator** — Share new tool on social/Reddit
+5. **Email capture** — Add newsletter signup component
+6. **Check Google Search Console** — Organic queries bringing traffic
 
 ---
 
 ## Questions / Decisions Pending
 
-1. **Build order** — Runway Calculator next, or iterate on existing tools first?
+1. ~~**Build order** — Runway Calculator next, or iterate on existing tools first?~~ ✅ Runway Calculator built
 2. **Analytics** — Add Plausible/Simple Analytics for privacy-friendly tracking?
 3. **Custom domain** — Ready to connect robsmoneylab.com?
 4. **YNAB Insights approach** — Browser extension vs. current upload model?
 5. **Monetization** — When/how to introduce paid features?
-6. **Open source timing** — After validation, or now for credibility?
+6. ~~**Open source timing** — After validation, or now for credibility?~~ ✅ Now public with MIT license
 
 ---
 
-*Status updated: January 2, 2026 1:17 PM*
+*Status updated: January 2, 2026*

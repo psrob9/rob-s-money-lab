@@ -118,9 +118,9 @@ Research identified a third archetype — people who are naturally frugal and do
 
 ---
 
-### Tool 3: Emergency Fund Runway Calculator (Planned)
-**Status:** 🟡 PRD Complete, Ready to Build  
-**URL:** /tools/runway-calculator (planned)
+### Tool 3: Layoff Runway Calculator
+**Status:** ✅ Live
+**URL:** /tools/runway-calculator
 
 **Purpose:** Show "how long will I last" based on current savings and spending patterns
 
@@ -132,28 +132,35 @@ Research identified a third archetype — people who are naturally frugal and do
 - Users experiencing income disruption need runway projections, not retrospective analysis
 
 **Features:**
-- **Simple Input Mode:** 5 fields (savings, monthly income, monthly expenses, expected duration, unemployment benefits)
-- **Advanced Mode:** Itemized breakdown using Rob's 2D categorization model
+- **Simple Input Mode:** Savings + monthly expenses (single field)
+- **Itemized Mode:** Detailed breakdown of essentials and discretionary spending
+- **Income Sources:** Partner income, unemployment benefits (editable estimate)
+- **Buffer Options:** None, 10%, or 20% safety margin
 - **Multiple Scenarios:**
   - Current Lifestyle (keep everything)
-  - Lean Mode (cut discretionary monthly)
-  - Bare-Bones Survival (essentials only)
-- **Visual Timeline:** Show key milestones and decision points
-- **Actionable Output:** Apply "What? So What? Now What?" framework
+  - Bare-Bones (essentials only)
+  - With Unemployment Benefits
+- **What-If Toggles:** Toggle UI, cut discretionary, add severance, add gig income
+- **Status Indicators:** Survival/Urgent/Moderate/Strong/Positive based on runway
+- **Action Recommendations:** Specific next steps based on situation
+- **3 Sample Scenarios:** Tight Squeeze, Tech Layoff, Single Income Family
 
 **Key Design Principles:**
 - Positive framing: "options remaining" not "countdown to doom"
 - Show what's possible, not just what's scary
 - Celebrate buffer time, don't amplify anxiety
+- Privacy upfront: accordion visible before user enters any data
+- UI duration note: warns about 26-week typical benefit period
 
-**Sample Scenario (validated from Reddit):**
-- $50,000 savings, $3,000 partner income, $4,666 monthly essentials
-- Insight: With unemployment benefits, they'd actually be cash-flow positive
+**Sample Scenarios:**
+1. **The Tight Squeeze** — Dual income, primary earner laid off, $15K savings
+2. **The Tech Layoff** — Single professional in HCOL area, $42K savings
+3. **The Single Income Family** — Stay-at-home parent household, $28K savings
 
 **Success Criteria:**
-- User understands their runway within 2 minutes
-- Provides at least one actionable insight (expense to cut, timeline milestone)
-- Does NOT trigger anxiety spiral
+- User understands their runway within 2 minutes ✅
+- Provides at least one actionable insight ✅
+- Does NOT trigger anxiety spiral ✅
 
 ---
 
@@ -427,12 +434,13 @@ Before finalizing ANY output, verify:
 ## 9. Go-to-Market Strategy
 
 ### Phase 1: Soft Launch ✅ Complete
-- ✅ Build functional tools that demonstrate real value
+- ✅ Build functional tools that demonstrate real value (3 tools live)
 - ✅ Create sample data demos for skeptical users
 - ✅ Reddit soft launch (r/vibecoding, r/ClaudeAI, r/ClaudeCode)
 - ⏳ Pending: r/personalfinance (awaiting mod approval)
 - ⏳ Pending: r/YNAB (awaiting mod approval)
 - ✅ Social media (Instagram, Threads)
+- ✅ Open source (GitHub public with MIT license)
 
 ### Phase 2: Iteration 🔄 In Progress
 - Monitor feedback via Formspree and Reddit
@@ -569,5 +577,6 @@ One-time value tools struggle with subscription models. Current strategy is buil
 
 ---
 
-*Document Version: 3.0*  
+*Document Version: 3.1*
+*Last Updated: January 2, 2026*
 *Next Review: January 15, 2026*
