@@ -298,13 +298,63 @@ const RunwayCalculator = () => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+
+            {/* Privacy Section */}
+            <Accordion type="single" collapsible className="mt-4">
+              <AccordionItem value="privacy" className="border rounded-xl bg-card shadow-sm">
+                <AccordionTrigger className="px-6 hover:no-underline">
+                  <span className="flex items-center gap-2 text-lab-navy font-medium">
+                    <Shield className="h-4 w-4" />
+                    Privacy
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <p className="text-sm text-lab-warm-gray mb-4">Your privacy is protected:</p>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                      All calculations happen in your browser
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                      Your numbers are never sent to any server
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                      We don't store any of your financial data
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
+                      No account required, no tracking
+                    </li>
+                  </ul>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    This tool is part of Rob's Money Lab — privacy-first financial tools.{" "}
+                    <Link to="/about#privacy" className="text-lab-teal hover:underline">
+                      Learn more about our approach →
+                    </Link>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Don't take our word for it —{" "}
+                    <a
+                      href="https://github.com/psrob9/rob-s-money-lab"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lab-teal hover:underline"
+                    >
+                      view the source code
+                    </a>.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </section>
 
         {/* Calculator Form */}
         <section id="calculator-form" className="pb-16">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl space-y-6">
-            
+
             {/* Section A: Your Safety Net */}
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-4">
@@ -511,12 +561,27 @@ const RunwayCalculator = () => {
                   </div>
                   
                   {formData.previousMonthlyIncome > 0 && (
-                    <p className="text-sm text-lab-navy">
-                      Estimated monthly UI benefit: <strong>~{formatCurrency(unemploymentEstimate)}</strong>
-                    </p>
+                    <div className="mt-3">
+                      <Label className="text-sm text-lab-warm-gray mb-2 block">
+                        Monthly UI benefit:
+                      </Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input
+                          type="number"
+                          value={formData.customUIBenefit ?? unemploymentEstimate}
+                          onChange={(e) => updateField('customUIBenefit', Number(e.target.value))}
+                          className="pl-7"
+                          placeholder={String(unemploymentEstimate)}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Default estimate: ~25% of previous income. Adjust based on your state's benefits.
+                      </p>
+                    </div>
                   )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ℹ️ Estimate only. Actual benefits vary by state.
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ℹ️ Most states provide unemployment for ~26 weeks (6 months). Factor this into your planning.
                   </p>
                 </div>
               )}
@@ -918,56 +983,6 @@ const RunwayCalculator = () => {
                   )}
                 </Card>
               )}
-
-              {/* Privacy Section */}
-              <Accordion type="single" collapsible>
-                <AccordionItem value="privacy" className="border rounded-xl bg-card shadow-sm">
-                  <AccordionTrigger className="px-6 hover:no-underline">
-                    <span className="flex items-center gap-2 text-lab-navy font-medium">
-                      <Shield className="h-4 w-4" />
-                      Privacy
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6">
-                    <p className="text-sm text-lab-warm-gray mb-4">Your privacy is protected:</p>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
-                        All calculations happen in your browser
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
-                        Your numbers are never sent to any server
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
-                        We don't store any of your financial data
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-lab-sage mt-0.5 shrink-0" />
-                        No account required, no tracking
-                      </li>
-                    </ul>
-                    <p className="text-sm text-muted-foreground mt-4">
-                      This tool is part of Rob's Money Lab — privacy-first financial tools.{" "}
-                      <Link to="/about#privacy" className="text-lab-teal hover:underline">
-                        Learn more about our approach →
-                      </Link>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Don't take our word for it —{" "}
-                      <a
-                        href="https://github.com/psrob9/rob-s-money-lab"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-lab-teal hover:underline"
-                      >
-                        view the source code
-                      </a>.
-                    </p>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
 
               {/* What's Next */}
               <Card className="p-6">

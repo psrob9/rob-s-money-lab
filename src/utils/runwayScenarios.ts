@@ -33,6 +33,7 @@ export interface RunwayScenario {
     partnerIncome: number;
     includeUnemployment: boolean;
     previousMonthlyIncome: number;
+    customUIBenefit?: number; // User-editable override for estimated UI benefit
     // Buffer
     buffer: 'none' | '10' | '20';
   };
@@ -198,8 +199,8 @@ export function calculateTotals(data: RunwayScenario['data']) {
     ? essentialsTotal * bufferMultiplier 
     : totalExpenses * 0.9; // Assume 10% is discretionary if using simple mode
   
-  const unemploymentBenefit = data.includeUnemployment 
-    ? estimateUnemploymentBenefit(data.previousMonthlyIncome) 
+  const unemploymentBenefit = data.includeUnemployment
+    ? (data.customUIBenefit ?? estimateUnemploymentBenefit(data.previousMonthlyIncome))
     : 0;
   
   const totalIncome = data.partnerIncome + unemploymentBenefit;
